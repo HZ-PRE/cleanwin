@@ -1,0 +1,844 @@
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
+using CleanOptimize.App.Controls;
+using CleanOptimize.App.Services;
+using CleanOptimize.Core.Models;
+using CleanOptimize.Core.Rules;
+using CleanOptimize.Core.Store;
+using CleanOptimize.Core.Utils;
+
+namespace CleanOptimize.App.Pages;
+
+public partial class SmartScanPage : Page, IParamPage
+{
+    private readonly MainWindow _main;
+    private CancellationTokenSource? _scanCts;
+    private CancellationTokenSource? _cleanCts;
+    private List<ScanRowVM>? _rows;
+    private bool _scanning;
+    private bool _cleaning;
+
+    public SmartScanPage(MainWindow main)
+    {
+        InitializeComponent();
+        _main = main;
+        Loaded += (s, e) => UpdateSpinners();
+        Unloaded += (s, e) =>
+        {
+            SpinTransform.BeginAnimation(RotateTransform.AngleProperty, null);
+            CleanSpinTransform.BeginAnimation(RotateTransform.AngleProperty, null);
+        };
+    }
+
+    public void OnNavigated(object? param)
+    {
+        if (param as string == "start" && !_scanning && !_cleaning)
+            StartScanFromUi();
+
+    }
+
+    // ————— 体检预告(待机页,缓存数据) —————
+
+    private async Task BuildHealthPreviewAsync()
+    {
+        try
+        {
+            var last = ScanCache.Load();
+            if (last == null)
+            {
+                RenderHealthPreview(null);
+                return;
+            }
+            double freePct = 100;
+            try
+            {
+                var drive = DriveInfo.GetDrives().First(d => d.IsReady &&
+                    d.Name.StartsWith(System.IO.Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
+                freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
+            }
+            catch { }
+            int highImpact = 0;
+            try
+            {
+                var items = await Task.Run(() => Services.EnumerationCache.GetStartup());
+                highImpact = items.Count(i => i.Enabled && i.Impact == "高");
+            }
+            catch { }
+            RenderHealthPreview(Core.Analysis.HealthScoreService.Compute(last.TotalBytes, highImpact, freePct));
+        }
+        catch { }
+    }
+
+    private void RenderHealthPreview(Core.Analysis.HealthScoreService.Report? r)
+    {
+        HealthPreviewHost.Children.Clear();
+        var chip = new Border
+        {
+            Background = (Brush)FindResource("PrimarySoftBrush"),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(11, 4, 11, 5),
+        };
+        chip.Child = new TextBlock
+        {
+            Text = r == null
+                ? Services.Loc.T("hc.never")
+                : string.Format(Services.Loc.T("hc.last"), r.Score, Services.Loc.T(r.LevelKey)),
+            FontSize = 12,
+            FontWeight = FontWeights.Bold,
+            Foreground = (Brush)FindResource("PrimaryBrush"),
+        };
+        HealthPreviewHost.Children.Add(chip);
+    }
+
+    public void StartScanFromUi() => StartScan();
+
+    /// <summary>全局 Esc：取消进行中的扫描或清理。</summary>
+    public void TryCancelCurrent()
+    {
+        if (_scanning) _scanCts?.Cancel();
+        else if (_cleaning) _cleanCts?.Cancel();
+    }
+
+    // ————— 扫描 —————
+
+    private async void StartScan()
+    {
+        if (_scanning || _cleaning) return;
+        _scanning = true;
+        _scanCts = new CancellationTokenSource();
+        Show(PanelScanning);
+        ScanStageText.Text = Services.Loc.T("scan.preparing");
+        ScanDetailText.Text = "";
+        ScanProgressBar.Value = 0;
+        ScanPercentText.Text = "0%";
+        ScanFoundText.Text = Services.Loc.T("scan.found");
+
+        var scanner = new ScannerService();
+        var ctx = scanner.BuildContext(_scanCts.Token, detail =>
+        {
+            Dispatcher.Invoke(() => ScanDetailText.Text = detail);
+        });
+
+        var lastBytes = 0L;
+        var progress = new Progress<ScanProgress>(p =>
+        {
+            ScanStageText.Text = Services.Loc.RuleName(p.Stage, p.Stage);
+            ScanDetailText.Text = p.Detail;
+            ScanProgressBar.Value = p.RuleTotal > 0 ? p.RuleIndex * 100.0 / p.RuleTotal : 0;
+            ScanPercentText.Text = $"{(int)ScanProgressBar.Value}%";
+            if (p.FoundBytes != lastBytes)
+            {
+                lastBytes = p.FoundBytes;
+                ScanFoundText.Text = string.Format(Services.Loc.T("scan.found.f"), SizeText.OfBytes(p.FoundBytes));
+            }
+        });
+
+        List<RuleResult> results;
+        List<IScanRule> scannedRules;
+        try
+        {
+            scannedRules = scanner.Rules.Where(r =>
+                r.Group is RuleGroup.SystemJunk or RuleGroup.BrowserCache or RuleGroup.AppCache
+                or RuleGroup.RecycleBin).ToList();
+            results = await scanner.ScanAsync(scannedRules, ctx, progress);
+        }
+        catch (OperationCanceledException)
+        {
+            _scanning = false;
+            Show(PanelIdle);
+            _main.ShowToast(Services.Loc.T("toast.scanstopped"), ToastType.Info);
+            return;
+        }
+        catch (Exception ex)
+        {
+            _scanning = false;
+            Show(PanelIdle);
+            _main.ShowToast(Services.Loc.T("toast.scanfailed") + ex.Message, ToastType.Warning);
+            return;
+        }
+        _scanning = false;
+
+        BuildResultView(scannedRules, results);
+        Show(PanelResults);
+    }
+
+    internal void BuildResultView(List<IScanRule> rules, List<RuleResult> results, bool refreshHealth = true)
+    {
+        ResultGroups.Children.Clear();
+        _rows = new List<ScanRowVM>();
+        var pairs = rules.Zip(results, (rule, res) => (rule, res)).Where(p => p.res.Error == null && p.res.TotalSize > 0).ToList();
+
+        // 缓存摘要供首页使用
+        ScanCache.Save(new LastScanSummary
+        {
+            Time = DateTime.Now,
+            TotalBytes = results.Sum(r => r.TotalSize),
+            Rules = results.Where(r => r.Error == null).Select(r => new LastScanSummary.RuleSummary
+            {
+                Id = r.RuleId, Name = r.Name, Group = (int)r.Group, Risk = (int)r.Risk,
+                Size = r.TotalSize, Count = r.FileCount,
+            }).ToList(),
+        });
+
+        foreach (var (title, note, predicate) in new (string, string, Func<(IScanRule rule, RuleResult res), bool>)[]
+        {
+            (Services.Loc.T("scan.group.safe"), Services.Loc.T("scan.group.safe.note"),
+                p => p.res.Group == RuleGroup.SystemJunk && p.rule.Risk < RiskLevel.Confirm),
+            (Services.Loc.T("scan.group.cache"), Services.Loc.T("scan.group.cache.note"),
+                p => (p.res.Group is RuleGroup.BrowserCache or RuleGroup.AppCache) && p.rule.Risk < RiskLevel.Confirm),
+            (Services.Loc.T("scan.group.check"), Services.Loc.T("scan.group.check.note"),
+                p => p.res.Group == RuleGroup.RecycleBin || p.rule.Risk >= RiskLevel.Confirm || p.res.Group == RuleGroup.Privacy),
+        })
+        {
+            var groupRules = pairs.Where(predicate).ToList();
+            if (groupRules.Count == 0) continue;
+
+            var section = BuildSection(title, note, groupRules);
+            ResultGroups.Children.Add(section);
+        }
+
+        long total = results.Where(r => r.Error == null).Sum(r => r.TotalSize);
+        ResultTitleText.Text = total > 0 ? string.Format(Services.Loc.T("result.title.found"), SizeText.OfBytes(total)) : Services.Loc.T("result.title.clean");
+        ResultSubText.Text = string.Format(Services.Loc.T("result.sub"), DateTime.Now.ToString("yyyy-MM-dd HH:mm"), results.Count);
+        UpdateSelectionSummary();
+        _lastReport = null;
+        if (refreshHealth && HealthExpander.IsExpanded) _ = EnsureHealthAsync();
+    }
+
+    // ————— 体检摘要(结果页) —————
+
+    private Core.Analysis.HealthScoreService.Report? _lastReport;
+
+    private async Task BuildHealthSummaryAsync()
+    {
+        double freePct = 100;
+        try
+        {
+            var drive = DriveInfo.GetDrives().First(d => d.IsReady &&
+                d.Name.StartsWith(System.IO.Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
+            freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
+        }
+        catch { }
+        int highImpact = 0;
+        var maintOff = 0;
+        try
+        {
+            var items = await Task.Run(() => Services.EnumerationCache.GetStartup());
+            highImpact = items.Count(i => i.Enabled && i.Impact == "高");
+            maintOff = (await Task.Run(() => Core.Analysis.SystemMaintenanceService.CheckAll()))
+                .Count(m => m.State == "off");
+        }
+        catch { }
+        _lastReport = Core.Analysis.HealthScoreService.Compute(_rows?.Sum(r => r.Res.TotalSize) ?? 0, highImpact, freePct);
+        var r = _lastReport;
+        var levelBrush = (Brush)FindResource(r.BrushKey);
+
+        // 顶部徽章与摘要环随评分级别变色(绿=良好 / 橙=建议清理 / 红=需要清理)
+        ScoreBadgeBg.Fill = (Brush)FindResource(r.Score >= 70 ? "SuccessSoftBrush" : "WarningSoftBrush");
+        ScoreBadgeIcon.Stroke = levelBrush;
+        ScoreBadgeIcon.Data = (Geometry)FindResource(r.Score >= 70 ? "CheckIcon" : "WarningIcon");
+
+        // 左侧评分环
+        HealthRingHost.Children.Clear();
+        var ring = new Controls.RingGauge(96, 10) { ArcBrush = levelBrush };
+        var center = new StackPanel();
+        var scoreTb = new TextBlock
+        {
+            Text = r.Score.ToString(), FontSize = 24, FontWeight = FontWeights.Bold,
+            Foreground = levelBrush, HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        CountUp.Animate(scoreTb, r.Score, v => ((int)v).ToString(), TimeSpan.FromMilliseconds(800));
+        center.Children.Add(scoreTb);
+        center.Children.Add(new TextBlock
+        {
+            Text = Services.Loc.T(r.LevelKey), FontSize = 10.5,
+            Foreground = (Brush)FindResource("TextTertiaryBrush"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+        });
+        ring.Center = center;
+        HealthRingHost.Children.Add(ring);
+        ring.AnimateTo(r.Score, TimeSpan.FromMilliseconds(900));
+        HealthSummaryScore.Text = Services.Loc.T(r.LevelKey);
+        HealthSummaryScore.Foreground = levelBrush;
+
+        // 三因子条形:条与数值同色,宽度动画
+        HealthFactorHost.Children.Clear();
+        int delay = 0;
+        void FactorBar(string label, double v)
+        {
+            var vBrush = Services.StatusColors.BrushFor(this, v);
+            var row = new Grid { Margin = new Thickness(0, 5, 0, 5) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(new TextBlock
+            {
+                Text = label, FontSize = 12,
+                Foreground = (Brush)FindResource("TextSecondaryBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            var track = new Border
+            {
+                Height = 8, CornerRadius = new CornerRadius(4),
+                Background = (Brush)FindResource("TrackBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 10, 0),
+            };
+            var fill = new Border
+            {
+                Height = 8, CornerRadius = new CornerRadius(4),
+                Width = 0,
+                Background = vBrush,
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            track.Child = fill;
+            Grid.SetColumn(track, 1);
+            row.Children.Add(track);
+            var val = new TextBlock
+            {
+                Text = ((int)v).ToString(), FontSize = 12.5, FontWeight = FontWeights.Bold,
+                Foreground = vBrush,
+                VerticalAlignment = VerticalAlignment.Center, MinWidth = 26,
+            };
+            Grid.SetColumn(val, 2);
+            row.Children.Add(val);
+            HealthFactorHost.Children.Add(row);
+
+            // 宽度入场动画(依次错开)
+            var targetW = Math.Max(6, 320.0 * v / 100);
+            fill.Loaded += (s, e) =>
+            {
+                var anim = new DoubleAnimation(0, targetW, TimeSpan.FromMilliseconds(700))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                    BeginTime = TimeSpan.FromMilliseconds(delay),
+                };
+                fill.BeginAnimation(WidthProperty, anim);
+            };
+            delay += 120;
+        }
+        FactorBar(Services.Loc.T("hc.factor.disk"), r.DiskFactor);
+        FactorBar(Services.Loc.T("hc.factor.junk"), r.JunkFactor);
+        FactorBar(Services.Loc.T("hc.factor.startup"), r.StartupFactor);
+
+        // 待办行:整行可点 + 悬停 + 左侧状态色点
+        HealthTodoHost.Children.Clear();
+        void TodoRow(string text, PageKey target, object? param)
+        {
+            var row = new Border
+            {
+                Background = (Brush)FindResource("ItemHoverBrush"),
+                CornerRadius = new CornerRadius(9),
+                Padding = new Thickness(12, 8, 12, 8),
+                Margin = new Thickness(0, 5, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+            };
+            var g = new Grid();
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var dot = new Ellipse
+            {
+                Width = 8, Height = 8, Fill = (Brush)FindResource("WarningBrush"),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0),
+            };
+            Grid.SetColumn(dot, 0);
+            g.Children.Add(dot);
+            g.Children.Add(new TextBlock
+            {
+                Text = text, FontSize = 12.5,
+                Foreground = (Brush)FindResource("TextPrimaryBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            var go = new TextBlock
+            {
+                Text = Services.Loc.T("hc.goto") + "  ›", FontSize = 12, FontWeight = FontWeights.Bold,
+                Foreground = (Brush)FindResource("PrimaryBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(go, 2);
+            g.Children.Add(go);
+            row.Child = g;
+            row.MouseLeftButtonUp += (s, e) => _main.Navigate(target, param);
+            row.MouseEnter += (s, e) => row.Background = (Brush)FindResource("ItemPressedBrush");
+            row.MouseLeave += (s, e) => row.Background = (Brush)FindResource("ItemHoverBrush");
+            HealthTodoHost.Children.Add(row);
+        }
+        if (highImpact > 0)
+            TodoRow(string.Format(Services.Loc.T("hc.todo.startup"), highImpact), PageKey.Startup, null);
+        if (maintOff > 0)
+            TodoRow(string.Format(Services.Loc.T("hc.todo.maint"), maintOff), PageKey.Toolbox, "maint");
+    }
+
+    private Task? _healthTask;
+    private async void HealthExpander_Expanded(object sender, RoutedEventArgs e)
+    {
+        if (_rows == null || _lastReport != null) return;
+        try { await EnsureHealthAsync(); }
+        catch (Exception ex) { AppLog.Error("Health summary", ex); }
+    }
+    private Task EnsureHealthAsync() => _healthTask is { IsCompleted: false } ? _healthTask :
+        _healthTask = BuildHealthSummaryAsync();
+
+    private async void BtnCopyReport_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rows == null) return;
+        try { if (_lastReport == null) await EnsureHealthAsync(); }
+        catch (Exception ex) { _main.ShowToast(ex.Message, ToastType.Warning); return; }
+        if (_lastReport == null) return;
+        var r = _lastReport;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine(string.Format(Services.Loc.T("hc.copy.header"), DateTime.Now.ToString("yyyy-MM-dd HH:mm")));
+        sb.AppendLine(string.Format(Services.Loc.T("hc.copy.score"), r.Score, Services.Loc.T(r.LevelKey)));
+        foreach (var row in _rows.Where(x => x.Res.TotalSize > 0).OrderByDescending(x => x.Res.TotalSize))
+            sb.AppendLine($"- {row.Name}: {row.SizeText} ({row.CountText})");
+        try
+        {
+            System.Windows.Clipboard.SetText(sb.ToString());
+            _main.ShowToast(Services.Loc.T("toast.reportcopied"), ToastType.Success);
+        }
+        catch { }
+    }
+
+    private StackPanel BuildSection(string title, string note, List<(IScanRule rule, RuleResult res)> rules)
+    {
+        var sp = new StackPanel { Margin = new Thickness(0, 0, 0, 6) };
+        sp.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontSize = 14.5,
+            FontWeight = FontWeights.Bold,
+            Foreground = (Brush)FindResource("TextPrimaryBrush"),
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text = note,
+            FontSize = 11.5,
+            Foreground = (Brush)FindResource("TextTertiaryBrush"),
+            Margin = new Thickness(0, 3, 0, 8),
+        });
+        var card = new Border
+        {
+            Style = (Style)FindResource("CardBorder"),
+            Padding = new Thickness(8, 6, 8, 6),
+        };
+        var list = new StackPanel();
+        foreach (var (rule, res) in rules)
+        {
+            var vm = new ScanRowVM(res, rule);
+            _rows!.Add(vm);
+            list.Children.Add(BuildRuleRow(vm));
+        }
+        card.Child = list;
+        sp.Children.Add(card);
+        return sp;
+    }
+
+    private Border BuildRuleRow(ScanRowVM vm)
+    {
+        var row = new Border { Padding = new Thickness(12, 10, 12, 10), CornerRadius = new CornerRadius(9) };
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var cb = new CheckBox
+        {
+            Style = (Style)FindResource("RoundCheckOnly"),
+            IsChecked = vm.Selected,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        cb.Checked += (s, e) => { vm.Selected = true; UpdateSelectionSummary(); };
+        cb.Unchecked += (s, e) => { vm.Selected = false; UpdateSelectionSummary(); };
+        vm.CheckBox = cb;
+        Grid.SetColumn(cb, 0);
+
+        var mid = new StackPanel { Margin = new Thickness(12, 0, 8, 0) };
+        var line1 = new WrapPanel();
+        line1.Children.Add(new TextBlock
+        {
+            Text = vm.Name,
+            FontSize = 13.5,
+            FontWeight = FontWeights.Bold,
+            Foreground = (Brush)FindResource("TextPrimaryBrush"),
+        });
+        line1.Children.Add(BuildChip(vm.RiskText, vm.RiskBrush, new Thickness(10, 0, 0, 0)));
+        if (vm.RunningCount > 0)
+        {
+            line1.Children.Add(BuildChip(string.Format(Services.Loc.T("row.running"), vm.RunningCount), (Brush)FindResource("WarningBrush"),
+                new Thickness(8, 0, 0, 0), soft: true));
+        }
+        mid.Children.Add(line1);
+        var reason = new TextBlock
+        {
+            Text = vm.Reason + (vm.CanRestore ? " · " + Services.Loc.T("row.restore") : " · " + Services.Loc.T("row.direct")),
+            FontSize = 11.5,
+            Foreground = (Brush)FindResource("TextTertiaryBrush"),
+            Margin = new Thickness(0, 3, 0, 0),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+        ToolTipService.SetToolTip(reason, vm.Reason + "\n\n" + string.Format(Services.Loc.T("row.impact.tip"), vm.Impact));
+        mid.Children.Add(reason);
+        Grid.SetColumn(mid, 1);
+
+        var size = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        size.Children.Add(new TextBlock
+        {
+            Text = vm.SizeText,
+            FontSize = 14.5,
+            FontWeight = FontWeights.Bold,
+            Foreground = (Brush)FindResource("TextPrimaryBrush"),
+            HorizontalAlignment = HorizontalAlignment.Right,
+        });
+        size.Children.Add(new TextBlock
+        {
+            Text = vm.CountText,
+            FontSize = 11,
+            Foreground = (Brush)FindResource("TextTertiaryBrush"),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 2, 0, 0),
+        });
+        Grid.SetColumn(size, 2);
+
+        var detailsHost = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(30, 4, 6, 6) };
+        vm.DetailsHost = detailsHost;
+
+        var toggle = new ToggleButton
+        {
+            Style = (Style)FindResource("DetailsToggle"),
+            IsChecked = vm.Expanded,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(14, 0, 0, 0),
+            ToolTip = Services.Loc.T("row.details.tip"),
+        };
+        toggle.Click += (s, e) =>
+        {
+            vm.Expanded = toggle.IsChecked == true;
+            detailsHost.Visibility = vm.Expanded ? Visibility.Visible : Visibility.Collapsed;
+            if (vm.Expanded) BuildDetails(vm);
+        };
+        Grid.SetColumn(toggle, 3);
+
+        grid.Children.Add(cb);
+        grid.Children.Add(mid);
+        grid.Children.Add(size);
+        grid.Children.Add(toggle);
+
+        var outer = new StackPanel();
+        outer.Children.Add(grid);
+
+        outer.Children.Add(detailsHost);
+
+        row.Child = outer;
+        row.MouseEnter += (s, e) => row.Background = (Brush)FindResource("ItemHoverBrush");
+        row.MouseLeave += (s, e) => row.Background = Brushes.Transparent;
+        return row;
+    }
+
+    private void BuildDetails(ScanRowVM vm)
+    {
+        var host = vm.DetailsHost;
+        if (host == null) return;
+        host.Children.Clear();
+        var items = vm.Res.Items.Take(100).ToList();
+        foreach (var it in items)
+        {
+            var line = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var path = new TextBlock
+            {
+                Text = it.Path + (it.IsDirectory ? "  " + Services.Loc.T("row.details.dir") : ""),
+                FontSize = 11,
+                Foreground = (Brush)FindResource("TextSecondaryBrush"),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            };
+            ToolTipService.SetToolTip(path, it.Path);
+            Controls.UiPathMenu.Attach(path, it.Path);
+            Grid.SetColumn(path, 0);
+            var sz = new TextBlock
+            {
+                Text = SizeText.OfBytes(it.Size),
+                FontSize = 11,
+                Foreground = (Brush)FindResource("TextTertiaryBrush"),
+                Margin = new Thickness(14, 0, 0, 0),
+            };
+            Grid.SetColumn(sz, 1);
+            line.Children.Add(path);
+            line.Children.Add(sz);
+            host.Children.Add(line);
+        }
+        if (vm.Res.Items.Count > 100)
+        {
+            host.Children.Add(new TextBlock
+            {
+                Text = string.Format(Services.Loc.T("row.details.more"), vm.Res.Items.Count - 100),
+                FontSize = 11,
+                Foreground = (Brush)FindResource("TextTertiaryBrush"),
+                Margin = new Thickness(0, 3, 0, 0),
+            });
+        }
+    }
+
+    private static Border BuildChip(string text, Brush brush, Thickness margin, bool soft = false)
+    {
+        var bd = new Border
+        {
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8, 2, 8, 3),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = margin,
+            Background = soft
+                ? new SolidColorBrush(OpacityBlend(brush))
+                : (Brush)System.Windows.Application.Current.FindResource("PrimarySoftBrush"),
+        };
+        bd.Child = new TextBlock
+        {
+            Text = text,
+            FontSize = 10.5,
+            FontWeight = FontWeights.Bold,
+            Foreground = brush,
+        };
+        return bd;
+    }
+
+    private static Color OpacityBlend(Brush b)
+    {
+        if (b is SolidColorBrush sc) return Color.FromArgb(28, sc.Color.R, sc.Color.G, sc.Color.B);
+        return Color.FromArgb(28, 0, 0, 0);
+    }
+
+    private void UpdateSelectionSummary()
+    {
+        if (_rows == null) return;
+        int count = 0;
+        long bytes = 0;
+        foreach (var r in _rows.Where(r => r.Selected))
+        {
+            count += r.Res.FileCount;
+            bytes += r.Res.TotalSize;
+        }
+        SelCountText.Text = string.Format(Services.Loc.T("common.n.items"), count);
+        SelSizeText.Text = SizeText.OfBytes(bytes);
+    }
+
+    // ————— 清理 —————
+
+    private async void BtnCleanSelected_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rows == null || _cleaning || _scanning) return;
+        var selected = _rows.Where(r => r.Selected).ToList();
+        if (selected.Count == 0)
+        {
+            _main.ShowToast(Services.Loc.T("toast.noselect"), ToastType.Info);
+            return;
+        }
+
+        // 高风险确认（L2 默认未勾选，此处兜底提示）
+        var confirmRules = selected.Where(r => r.Risk == RiskLevel.Confirm).ToList();
+        string confirmMsg = string.Format(Services.Loc.T("dlg.clean.amount"), SizeText.OfBytes(selected.Sum(r => r.Res.TotalSize)));
+        if (confirmRules.Count > 0)
+        {
+            confirmMsg += Services.Loc.T("dlg.clean.confirmitems") + "\n" +
+                          string.Join("\n", confirmRules.Select(r => "· " + Services.Loc.RuleName(r.Res.RuleId, r.Name) + "（" + r.SizeText + "）"));
+        }
+        confirmMsg += "\n\n" + Services.Loc.T("dlg.clean.quarantinehint");
+        if (!DialogService.Confirm(_main, Services.Loc.T("dlg.clean.selected.title"), confirmMsg, Services.Loc.T("btn.clean.start"), Services.Loc.T("btn.cancel")))
+            return;
+
+        _cleaning = true;
+        _cleanCts = new CancellationTokenSource();
+        Show(PanelCleaning);
+        CleanProgressBar.Value = 0;
+        CleanFreedText.Text = Services.Loc.T("clean.freed");
+        CleanTitleText.Text = Services.Loc.T("clean.title");
+
+        var svc = new CleanService();
+        var requests = selected.Select(r => new CleanRequestRule
+        {
+            Rule = r.Rule,
+            Result = r.Res,
+            Selected = r.Res.Items.ToList(),
+        }).ToList();
+
+        int total = requests.Sum(q => q.Selected.Count);
+        int done = 0;
+        var progress = new Progress<CleanProgress>(p =>
+        {
+            done++;
+            CleanProgressBar.Value = total > 0 ? done * 100.0 / total : 100;
+            CleanDetailText.Text = p.CurrentPath;
+            CleanFreedText.Text = string.Format(Services.Loc.T("clean.freed.f"), SizeText.OfBytes(p.FreedBytes));
+        });
+
+        CleanSummary summary;
+        try
+        {
+            summary = await svc.CleanAsync(requests, _cleanCts.Token, progress);
+        }
+        catch (OperationCanceledException)
+        {
+            _cleaning = false;
+            Show(PanelResults);
+            _main.ShowToast(Services.Loc.T("toast.cleancancelled"), ToastType.Info);
+            return;
+        }
+        catch (Exception ex)
+        {
+            _cleaning = false;
+            Show(PanelResults);
+            _main.ShowToast(Services.Loc.T("toast.cleanfailed") + ex.Message, ToastType.Warning);
+            return;
+        }
+        _cleaning = false;
+
+        DoneTitleText.Text = summary.Cancelled ? Services.Loc.T("done.cancelled") : summary.FailCount == 0 && summary.SkipCount == 0 ? Services.Loc.T("done.title") : Services.Loc.T("done.partial");
+        DoneFreedText.Text = string.Format(Services.Loc.T("done.freed.total"), SizeText.OfBytes(summary.FreedBytes));
+        DoneOkText.Text = summary.SuccessCount.ToString();
+        DoneQuarText.Text = summary.QuarantineCount.ToString();
+        DoneSkipText.Text = summary.SkipCount.ToString();
+        DoneFailText.Text = summary.FailCount.ToString();
+        DoneNoteText.Text = summary.QuarantineCount > 0
+            ? string.Format(Services.Loc.T("done.note.quarantine"), SettingsService.Current.QuarantineDays)
+            : Services.Loc.T("done.note.skip");
+
+        // 评分对比:按已释放量重算(预计值,诚实标注)
+        if (_lastReport != null && summary.FreedBytes > 0)
+        {
+            try
+            {
+                double freePct = 100;
+                var drive = DriveInfo.GetDrives().First(d => d.IsReady &&
+                    d.Name.StartsWith(System.IO.Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
+                freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
+                var after = Core.Analysis.HealthScoreService.Compute(
+                    Math.Max(0, _lastReport.JunkBytes - summary.FreedBytes),
+                    _lastReport.HighImpactStartup, freePct);
+                if (after.Score > _lastReport.Score)
+                {
+                    DoneScoreText.Text = string.Format(Services.Loc.T("hc.done.score"),
+                        _lastReport.Score, after.Score);
+                    DoneScoreText.Foreground = (Brush)FindResource(after.BrushKey);
+                    DoneScoreText.Visibility = Visibility.Visible;
+                }
+            }
+            catch { }
+        }
+        Show(PanelDone);
+
+        // 后台重扫以刷新缓存
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var scanner = new ScannerService();
+                var ctx = scanner.BuildContext(CancellationToken.None);
+                var rules = scanner.Rules.Where(r =>
+                    r.Group is RuleGroup.SystemJunk or RuleGroup.BrowserCache or RuleGroup.AppCache
+                    or RuleGroup.RecycleBin).ToList();
+                var results = await scanner.ScanAsync(rules, ctx, null);
+                ScanCache.Save(new LastScanSummary
+                {
+                    Time = DateTime.Now,
+                    TotalBytes = results.Sum(r => r.TotalSize),
+                    Rules = results.Where(r => r.Error == null).Select(r => new LastScanSummary.RuleSummary
+                    {
+                        Id = r.RuleId, Name = r.Name, Group = (int)r.Group, Risk = (int)r.Risk,
+                        Size = r.TotalSize, Count = r.FileCount,
+                    }).ToList(),
+                });
+            }
+            catch { }
+        });
+    }
+
+    private void BtnDoneHome_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.Home);
+    private void BtnDoneQuarantine_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.Toolbox, "quarantine");
+
+    private void BtnStartScan_Click(object sender, RoutedEventArgs e) => StartScan();
+    private void BtnStopScan_Click(object sender, RoutedEventArgs e) => _scanCts?.Cancel();
+    private void BtnStopClean_Click(object sender, RoutedEventArgs e) => _cleanCts?.Cancel();
+
+    private void BtnReselectAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rows == null) return;
+        foreach (var r in _rows)
+        {
+            bool newVal = r.Risk <= RiskLevel.Low;
+            r.Selected = newVal;
+            r.CheckBox!.IsChecked = newVal;
+        }
+        UpdateSelectionSummary();
+    }
+
+    private void Show(UIElement panel)
+    {
+        PanelIdle.Visibility = panel == PanelIdle ? Visibility.Visible : Visibility.Collapsed;
+        PanelScanning.Visibility = panel == PanelScanning ? Visibility.Visible : Visibility.Collapsed;
+        PanelResults.Visibility = panel == PanelResults ? Visibility.Visible : Visibility.Collapsed;
+        PanelCleaning.Visibility = panel == PanelCleaning ? Visibility.Visible : Visibility.Collapsed;
+        PanelDone.Visibility = panel == PanelDone ? Visibility.Visible : Visibility.Collapsed;
+        UpdateSpinners();
+    }
+
+    private void UpdateSpinners()
+    {
+        SpinTransform.BeginAnimation(RotateTransform.AngleProperty,
+            IsLoaded && PanelScanning.Visibility == Visibility.Visible
+                ? new DoubleAnimation(0, 360, TimeSpan.FromSeconds(1.1)) { RepeatBehavior = RepeatBehavior.Forever } : null);
+        CleanSpinTransform.BeginAnimation(RotateTransform.AngleProperty,
+            IsLoaded && PanelCleaning.Visibility == Visibility.Visible
+                ? new DoubleAnimation(0, -360, TimeSpan.FromSeconds(1.6)) { RepeatBehavior = RepeatBehavior.Forever } : null);
+    }
+}
+
+/// <summary>结果行视图模型。</summary>
+public sealed class ScanRowVM : INotifyPropertyChanged
+{
+    public IScanRule Rule { get; }
+    public RuleResult Res { get; }
+
+    public string Name => Services.Loc.RuleName(Res.RuleId, Res.Name);
+    public string SizeText => CleanOptimize.Core.Utils.SizeText.OfBytes(Res.TotalSize);
+    public string CountText => string.Format(Services.Loc.T("row.files"), Res.FileCount);
+    public string Reason => Services.Loc.RuleReason(Res.RuleId, Res.Reason);
+    public string RestoreText => Services.Loc.T("row.restore");
+    public string DirectText => Services.Loc.T("row.direct");
+    public string Impact => Services.Loc.RuleImpact(Res.RuleId, Res.Impact);
+    public bool CanRestore => Res.CanRestore;
+    public string RiskText => Res.Risk switch { RiskLevel.Safe => Services.Loc.T("risk.safe"), RiskLevel.Low => Services.Loc.T("risk.low"), RiskLevel.Confirm => Services.Loc.T("risk.confirm"), _ => Services.Loc.T("risk.high") };
+    public System.Windows.Media.Brush RiskBrush => Res.Risk switch
+    {
+        RiskLevel.Confirm => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("WarningBrush"),
+        RiskLevel.High => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("DangerBrush"),
+        _ => (System.Windows.Media.Brush)System.Windows.Application.Current.FindResource("SuccessBrush"),
+    };
+    public int RunningCount => Res.RunningProcesses.Count;
+    public RiskLevel Risk => Res.Risk;
+
+    private bool _selected;
+    public bool Selected
+    {
+        get => _selected;
+        set { _selected = value; PropertyChanged?.Invoke(this, new(nameof(Selected))); }
+    }
+    public bool Expanded { get; set; }
+    public CheckBox? CheckBox { get; set; }
+    public StackPanel? DetailsHost { get; set; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ScanRowVM(RuleResult res, IScanRule rule)
+    {
+        Res = res;
+        Rule = rule;
+        _selected = rule.DefaultSelected && rule.Risk <= RiskLevel.Low && rule.Group != RuleGroup.Privacy &&
+            res.DefaultSelected && res.TotalSize > 0;
+    }
+}

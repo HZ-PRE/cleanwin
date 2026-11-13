@@ -1,0 +1,176 @@
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="CleanOptimize.App.Pages.ToolboxPage" FontFamily="Microsoft YaHei UI">
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <WrapPanel x:Name="ToolShortcuts" Margin="4,0,4,12" Visibility="Collapsed">
+      <Button Tag="dup" Content="{DynamicResource tool.dup.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="empty" Content="{DynamicResource tool.empty.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="quarantine" Content="{DynamicResource tool.quarantine.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="shred" Content="{DynamicResource tool.shred.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="history" Content="{DynamicResource tool.history.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="maint" Content="{DynamicResource maint.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+      <Button Tag="windows" Content="{DynamicResource tool.win.title}" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+    </WrapPanel>
+  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" x:Name="ToolScroll">
+    <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch" Margin="4,2,4,16">
+      <TextBlock x:Name="ToolHeading" Text="{DynamicResource nav.toolbox}" FontSize="21" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="4,2,0,0"/>
+      <TextBlock x:Name="ToolIntro" Text="{DynamicResource tool.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="6,8,0,0"/>
+      <Button x:Name="ToolBack" Content="{DynamicResource ui.tools.back}" Style="{StaticResource LinkButton}" HorizontalAlignment="Left" Visibility="Collapsed" Click="ToolBack_Click" Margin="0,12,0,0"/>
+      <WrapPanel x:Name="ToolIndex" Margin="0,22,0,0">
+        <Button Tag="dup" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.dup.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource tool.dup.desc}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="empty" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.empty.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource tool.empty.desc}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="quarantine" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.quarantine.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource ui.quarantine.note}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="shred" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.shred.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource tool.shred.desc}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="history" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.history.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource ui.history.note}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="maint" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource maint.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource maint.desc}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+        <Button Tag="windows" Click="ToolTile_Click" Style="{StaticResource SecondaryButton}" Width="300" MinHeight="100" Margin="0,0,14,14" Padding="18" HorizontalContentAlignment="Left">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource tool.win.title}" FontSize="15" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource tool.win.desc}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Button>
+      </WrapPanel>
+      <!-- 隔离区 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="QuarantineCard" Tag="quarantine" Visibility="Collapsed">
+        <StackPanel>
+          <Grid>
+            <StackPanel Orientation="Horizontal">
+              <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource WarningSoftBrush}">
+                <Path Data="{StaticResource UndoIcon}" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="18" Height="18" Stretch="Uniform"/>
+              </Border>
+              <TextBlock Text="{DynamicResource tool.quarantine.title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0"/>
+            </StackPanel>
+            <Button x:Name="BtnPurgeQuarantine" Content="{DynamicResource btn.purge}" Style="{StaticResource DangerGhostButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnPurgeQuarantine_Click"/>
+          </Grid>
+          <TextBlock x:Name="QuarantineSummaryText" Text="{DynamicResource tool.quar.empty}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,0,0"/>
+          <controls:VirtualRows xmlns:controls="clr-namespace:CleanOptimize.App.Controls" x:Name="QuarantineList" Height="400" Margin="0,12,0,0"/>
+          <TextBlock x:Name="QuarantineOutcomeText" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- 文件粉碎 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="ShredCard" Tag="shred" Visibility="Collapsed">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource DangerSoftBrush}">
+              <Path Data="{StaticResource TrashSmallIcon}" Stroke="{DynamicResource DangerBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="18" Height="18" Stretch="Uniform"/>
+            </Border>
+            <TextBlock Text="{DynamicResource tool.shred.title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{DynamicResource tool.shred.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+          <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+            <Button x:Name="BtnShredFile" Content="{DynamicResource btn.shredfile}" Style="{StaticResource DangerButton}" Click="BtnShredFile_Click"/>
+            <Button x:Name="BtnShredDir" Content="{DynamicResource btn.shreddir}" Style="{StaticResource DangerGhostButton}" Margin="12,0,0,0" Click="BtnShredDir_Click"/>
+          </StackPanel>
+          <TextBlock x:Name="ShredOutcomeText" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- 重复文件 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="DuplicateCard" Tag="dup" Visibility="Collapsed">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}">
+              <Path Data="{StaticResource RefreshIcon}" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="18" Height="18" Stretch="Uniform"/>
+            </Border>
+            <TextBlock Text="{DynamicResource tool.dup.title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0"/>
+            <TextBlock x:Name="DupSummaryText" Text="" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="16,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{DynamicResource tool.dup.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,12,0,0"/>
+          <WrapPanel Margin="0,14,0,0">
+            <Button x:Name="BtnDupScan" Content="{DynamicResource btn.dupscan}" Style="{StaticResource PrimaryButton}" Padding="20,8" Click="BtnDupScan_Click"/>
+            <Button x:Name="BtnDupDirs" Content="{DynamicResource tool.dup.dirs}" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="BtnDupDirs_Click"/>
+            <Button x:Name="BtnDupKeepNewest" Content="{DynamicResource btn.dupkeepnew}" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="BtnDupKeepNewest_Click" Visibility="Collapsed"/>
+            <Button x:Name="BtnDupClean" Content="{DynamicResource btn.dupclean}" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="BtnDupClean_Click" Visibility="Collapsed"/>
+          </WrapPanel>
+          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
+            <TextBlock x:Name="DupOutcomeText" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
+          </ScrollViewer>
+          <controls:VirtualRows xmlns:controls="clr-namespace:CleanOptimize.App.Controls" x:Name="DupList" Height="400" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- 空文件夹清理 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="EmptyFolderCard" Tag="empty" Visibility="Collapsed">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}">
+              <Path Data="{StaticResource FolderIcon}" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="18" Height="18" Stretch="Uniform"/>
+            </Border>
+            <TextBlock Text="{DynamicResource tool.empty.title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0"/>
+            <TextBlock x:Name="EmptySummaryText" Text="" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="16,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{DynamicResource tool.empty.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+          <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+            <Button x:Name="BtnEmptyScan" Content="{DynamicResource tool.empty.scan}" Style="{StaticResource PrimaryButton}" Padding="20,8" Click="BtnEmptyScan_Click"/>
+            <Button x:Name="BtnEmptyDirs" Content="{DynamicResource tool.empty.dirs}" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="BtnEmptyDirs_Click"/>
+            <Button x:Name="BtnEmptyClean" Content="{DynamicResource tool.empty.clean}" Style="{StaticResource DangerButton}" Padding="20,8" Margin="12,0,0,0" Click="BtnEmptyClean_Click" Visibility="Collapsed"/>
+          </StackPanel>
+          <controls:VirtualRows xmlns:controls="clr-namespace:CleanOptimize.App.Controls" x:Name="EmptyList" Height="400" Margin="0,12,0,0"/>
+          <TextBlock x:Name="EmptyOutcomeText" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- 系统维护状态 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="MaintenanceCard" Tag="maint" Visibility="Collapsed">
+        <StackPanel>
+          <Grid>
+            <StackPanel Orientation="Horizontal">
+              <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource SuccessSoftBrush}">
+                <Path Data="{StaticResource ShieldIcon}" Stroke="{DynamicResource SuccessBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="18" Height="18" Stretch="Uniform"/>
+              </Border>
+              <TextBlock Text="{DynamicResource maint.title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0"/>
+            </StackPanel>
+            <Button x:Name="BtnMaintRefresh" Content="{DynamicResource btn.refresh}" Style="{StaticResource SmallSecondaryButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnMaintRefresh_Click"/>
+          </Grid>
+          <TextBlock Text="{DynamicResource maint.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+          <StackPanel x:Name="MaintList" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- 清理历史 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="HistoryCard" Tag="history" Visibility="Collapsed">
+        <StackPanel>
+          <Grid>
+            <TextBlock Text="{DynamicResource tool.history.title}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <Button x:Name="BtnClearHistory" Content="{DynamicResource btn.clearhistory}" Style="{StaticResource LinkButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="BtnClearHistory_Click"/>
+          </Grid>
+          <StackPanel x:Name="HistoryList" Margin="0,12,0,0"/>
+        </StackPanel>
+      </Border>
+      <!-- Windows 快捷工具 -->
+      <Border Style="{StaticResource CardBorder}" Margin="0,16,0,0" x:Name="WindowsCard" Tag="windows" Visibility="Collapsed">
+        <StackPanel>
+          <TextBlock Text="{DynamicResource tool.win.title}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+          <TextBlock Text="{DynamicResource tool.win.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,6,0,0"/>
+          <UniformGrid Columns="4" Margin="0,14,0,0" x:Name="ToolGrid"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+  </Grid>
+</Page>

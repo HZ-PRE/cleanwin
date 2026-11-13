@@ -1,0 +1,94 @@
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="CleanOptimize.App.Pages.CleanSpacePage" FontFamily="Microsoft YaHei UI">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <!-- 标题 + 标签页 -->
+    <StackPanel Grid.Row="0" Margin="4,2,4,0" Visibility="Collapsed">
+      <TextBlock Text="{DynamicResource nav.clean}" FontSize="21" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+      <StackPanel x:Name="TabBar" Orientation="Horizontal" Margin="0,16,0,0">
+        <RadioButton Content="{DynamicResource clean.tab.system}" Style="{StaticResource PillTab}" GroupName="cstabs" IsChecked="True" Tag="0" Checked="Tab_Checked"/>
+        <RadioButton Content="{DynamicResource clean.tab.app}" Style="{StaticResource PillTab}" GroupName="cstabs" Tag="1" Checked="Tab_Checked"/>
+        <RadioButton Content="{DynamicResource clean.tab.browser}" Style="{StaticResource PillTab}" GroupName="cstabs" Tag="2" Checked="Tab_Checked"/>
+        <RadioButton Content="{DynamicResource clean.tab.privacy}" Style="{StaticResource PillTab}" GroupName="cstabs" Tag="3" Checked="Tab_Checked"/>
+        <RadioButton Content="{DynamicResource clean.tab.recycle}" Style="{StaticResource PillTab}" GroupName="cstabs" Tag="4" Checked="Tab_Checked"/>
+      </StackPanel>
+      <TextBlock x:Name="TabNoteText" Text="" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="2,12,0,0"/>
+    </StackPanel>
+    <!-- 内容 -->
+    <Grid Grid.Row="2" Margin="2,12,2,0">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+      </Grid.RowDefinitions>
+      <!-- 隐私警告 -->
+      <Border x:Name="PrivacyBanner" Style="{StaticResource CardBorder}" Padding="16,12" Visibility="Collapsed" VerticalAlignment="Top" Margin="0,0,0,12" Background="{DynamicResource WarningSoftBrush}" BorderBrush="{DynamicResource WarningBrush}">
+        <StackPanel Orientation="Horizontal">
+          <Path Data="{StaticResource WarningIcon}" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="20" Height="20" Stretch="Uniform"/>
+          <TextBlock Text="{DynamicResource clean.privacy.banner}" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="880"/>
+        </StackPanel>
+      </Border>
+      <!-- 回收站卡片 -->
+      <Border x:Name="RecycleCard" Style="{StaticResource CardBorder}" Padding="24,20" Visibility="Collapsed" VerticalAlignment="Top" Grid.Row="1">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource PrimarySoftBrush}">
+              <Path Data="{StaticResource TrashSmallIcon}" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeLineJoin="Round" Width="22" Height="22" Stretch="Uniform"/>
+            </Border>
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="RecycleTitleText" Text="{DynamicResource clean.tab.recycle}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+              <TextBlock x:Name="RecycleInfoText" Text="正在读取…" FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            </StackPanel>
+          </StackPanel>
+          <TextBlock Text="{DynamicResource clean.recycle.desc}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,14,0,0"/>
+          <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+            <Button x:Name="BtnEmptyBin" Content="{DynamicResource btn.emptybin}" Style="{StaticResource DangerButton}" Click="BtnEmptyBin_Click"/>
+            <Button x:Name="BtnOpenBin" Content="{DynamicResource btn.openbin}" Style="{StaticResource SecondaryButton}" Margin="12,0,0,0" Click="BtnOpenBin_Click"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      <!-- 规则列表 -->
+      <Grid x:Name="RulesHost" Grid.Row="1">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <StackPanel x:Name="RuleList"/>
+            <TextBlock x:Name="EmptyGroupText" Text="{DynamicResource clean.empty.before}" FontSize="12.5" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Margin="0,40,0,0" Visibility="Collapsed"/>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+      <!-- 扫描中 -->
+      <StackPanel x:Name="GroupScanPanel" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="1">
+        <ProgressBar x:Name="GroupScanBar" Maximum="100" Value="0" Width="260" Height="6"/>
+        <TextBlock x:Name="GroupScanText" Text="{DynamicResource common.scanning}" FontSize="12.5" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
+        <TextBlock x:Name="GroupScanDetailText" Text="" FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="420" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+        <Button x:Name="BtnStopGroupScan" Content="{DynamicResource btn.stopscan}" Style="{StaticResource SmallSecondaryButton}" HorizontalAlignment="Center" Margin="0,18,0,0" Click="BtnStopGroupScan_Click"/>
+      </StackPanel>
+    </Grid>
+    <!-- 底部操作条 -->
+    <Border Grid.Row="3" Style="{StaticResource CardBorder}" Margin="0,14,0,0" Padding="20,12" x:Name="FooterBar">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+          <TextBlock x:Name="SelSizeText" Text="0 B" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0"/>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="{DynamicResource common.selected}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"/>
+            <TextBlock x:Name="SelCountText" Text="0" FontSize="13.5" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="6,0,0,0"/>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
+          <Button x:Name="BtnScanGroup" Content="{DynamicResource btn.scangroup}" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0" Click="BtnScanGroup_Click"/>
+          <Button x:Name="BtnCleanSel" Content="{DynamicResource btn.cleansel}" Style="{StaticResource PrimaryButton}" Click="BtnCleanSel_Click"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</Page>

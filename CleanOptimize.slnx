@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CleanOptimize.App/CleanOptimize.App.csproj" />
+    <Project Path="src/CleanOptimize.Core/CleanOptimize.Core.csproj" />
+    <Project Path="src/SelfTestRunner/SelfTestRunner.csproj" />
+  </Folder>
+</Solution>

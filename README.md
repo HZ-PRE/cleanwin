@@ -134,16 +134,16 @@ powershell -File scripts\publish.ps1
 
 ## 💬 联系我们
 
-- 🌐 官网：<https://52xn.com>
-- 📮 邮箱：<dev@52xn.com>
-- 💚 微信公众号：微信搜一搜「**AI虚拟助理**」
+- 🌐 官网：<https://xxxxx.com>
+- 📮 邮箱：<dev@xxxxx.com>
+- 💚 微信公众号：微信搜一搜「**馋熊冰**」
 
 <div align="center">
-  <img src="docs/images/wechat-search.png" alt="微信搜一搜：AI虚拟助理" width="640"/>
+  <img src="docs/images/wechat-search.png" alt="微信搜一搜：馋熊冰" width="640"/>
 </div>
 
 ## 📄 开源许可
 
-本项目以 **GPL-3.0** 许可证开源（见 [LICENSE](LICENSE)）：可自由使用、修改、分发，衍生作品需同样开源；商业授权 / 闭源定制请联系 <dev@52xn.com>。
+本项目以 **GPL-3.0** 许可证开源（见 [LICENSE](LICENSE)）：可自由使用、修改、分发，衍生作品需同样开源；商业授权 / 闭源定制请联系 <dev@xxxxx.com>。
 
 发布产物中的代码签名由 [SignPath Foundation](https://signpath.org) 面向开源项目免费提供（接入中）。

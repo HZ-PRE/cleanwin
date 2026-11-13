@@ -1,0 +1,26 @@
+# 构建产物
+bin/
+obj/
+*_wpftmp.csproj
+dist/
+out/
+.tools/
+
+# 用户数据/截图（本地验收材料，不入库）
+shots/
+*.user
+.vs/
+
+# 日志与本地配置
+*.log
+app.log
+
+# 系统文件
+Thumbs.db
+.DS_Store
+docs/
+output/
+# Python
+__pycache__/
+*.pyc
+scripts/gen_langs_fixed.py
