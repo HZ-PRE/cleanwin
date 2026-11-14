@@ -1,19 +1,10 @@
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using CleanOptimize.App.Controls;
 using CleanOptimize.App.Services;
 using CleanOptimize.Core.Analysis;
-using CleanOptimize.Core.Apps;
 using CleanOptimize.Core.Models;
-using CleanOptimize.Core.Rules;
-using CleanOptimize.Core.Store;
-using CleanOptimize.Core.Startup;
 using CleanOptimize.Core.Utils;
 
 namespace CleanOptimize.App.Pages;
@@ -23,650 +14,279 @@ public partial class HomePage : Page, IParamPage
     private readonly MainWindow _main;
     private readonly SystemMonitorService _monitor = new();
     private DispatcherTimer? _monitorTimer;
-    private RingGauge? _diskRing;
-    private RingGauge? _cpuRing;
-    private string? _lastCpuText;
-    private string? _lastRamText;
-    private RingGauge? _ramRing;
-    private TextBlock? _diskCenter;
-    private TextBlock? _cpuCenter;
-    private TextBlock? _ramCenter;
-    private TextBlock? _cpuDetail;
-    private TextBlock? _ramDetail;
-    private TextBlock? _uptimeText;
-    private RingGauge? _healthRing;
-    private TextBlock? _healthScoreText;
+    private Task? _refreshTask;
+    private string _selectedDrive = "";
+    private HomeDashboardSnapshot? _lastDashboard;
+    private bool _scrollToStats;
+    private int _lastCpu = -2, _lastRam = -2;
+    private long _lastRamUsed = -1, _lastRamTotal = -1, _lastUptimeMinute = -1;
 
     public HomePage(MainWindow main)
     {
         InitializeComponent();
         _main = main;
-        BuildDiskRing();
-        BuildMonitor();
-        BuildHealth();
-        Loaded += (s, e) => { _ = RefreshAsync(); StartMonitor(); };
-        Unloaded += (s, e) => StopMonitor();
+        CpuLabel.ToolTip = string.Format(Loc.T("home.mon.cores"), Environment.ProcessorCount);
+        Loaded += (_, _) => { _ = RefreshAsync(); _main.StateChanged += WindowStateChanged; UpdateMonitorState(); };
+        Unloaded += (_, _) => { _main.StateChanged -= WindowStateChanged; StopMonitor(); };
+        IsVisibleChanged += (_, _) => UpdateMonitorState();
     }
-
-    private bool _scrollToStats;
 
     public void OnNavigated(object? param)
     {
         _scrollToStats = param as string == "stats";
+        if (_scrollToStats) DetailsExpander.IsExpanded = true;
         _ = RefreshAsync();
     }
 
-    private string _selectedDrive = "";
-
-    private Task? _refreshTask;
-    private Task RefreshAsync() => _refreshTask is { IsCompleted: false } ? _refreshTask : _refreshTask = RefreshCoreAsync();
+    internal Task RefreshAsync() => _refreshTask is { IsCompleted: false } ? _refreshTask : _refreshTask = RefreshCoreAsync();
 
     private async Task RefreshCoreAsync()
     {
-        // —— 磁盘(多盘时提供盘符切换,默认系统盘) ——
         try
         {
-            var all = DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).ToList();
-            var sysDrive = all.FirstOrDefault(d =>
-                d.RootDirectory.FullName.StartsWith(Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
-            var drive = all.FirstOrDefault(d => d.Name.Equals(_selectedDrive, StringComparison.OrdinalIgnoreCase))
-                        ?? sysDrive ?? all.FirstOrDefault();
-            _selectedDrive = drive?.Name ?? "";
-            RenderDriveChips(all, drive);
-            if (drive != null)
+            while (true)
             {
-                var used = drive.TotalSize - drive.AvailableFreeSpace;
-                var pct = drive.TotalSize > 0 ? used * 100.0 / drive.TotalSize : 0;
-                DiskTitle.Text = string.Format(Services.Loc.T("home.disk.title.disk"), drive.Name.TrimEnd('\\'));
-                DiskTotalText.Text = string.Format(Services.Loc.T("home.disk.total.f"), SizeText.OfBytes(drive.TotalSize, 0));
-                if (_diskRing != null)
-                {
-                    _diskRing.ArcBrush = pct >= 90 ? (Brush)FindResource("DangerBrush")
-                        : pct >= 75 ? (Brush)FindResource("WarningBrush")
-                        : (Brush)FindResource("PrimaryBrush");
-                    _diskRing.AnimateTo(pct);
-                }
-                if (_diskCenter != null) _diskCenter.Text = pct.ToString("F0") + "%";
-                DiskUsedText.Text = string.Format(Services.Loc.T("home.disk.used.f"), SizeText.OfBytes(used, 0), pct);
-                DiskFreeText.Text = string.Format(Services.Loc.T("home.disk.free.f"), SizeText.OfBytes(drive.AvailableFreeSpace, 0), 100 - pct);
+                var requested = _selectedDrive;
+                var data = await Task.Run(() => HomeDashboardSnapshot.Load(requested));
+                if (!_main.CanInteract) return;
+                if (requested != _selectedDrive) continue;
+                ApplyDashboard(data);
+                break;
+            }
+            if (_scrollToStats && IsLoaded)
+            {
+                _scrollToStats = false;
+                StatsBars.BringIntoView();
             }
         }
-        catch { }
+        catch (Exception ex) { AppLog.Error("Home.Refresh", ex); }
+    }
 
-        // —— 缓存数据 ——
-        var last = ScanCache.Load();
-        var disk = DiskCache.Load(SystemDrive());
+    internal void ApplyDashboard(HomeDashboardSnapshot data)
+    {
+        _lastDashboard = data;
+        _selectedDrive = data.SelectedDrive;
+        var drive = data.Drives.Find(d => d.Name.Equals(_selectedDrive, StringComparison.OrdinalIgnoreCase));
+        RenderDriveChips(data.Drives, drive);
+        DiskTitle.Text = Loc.T("ui.home.disk");
+        DiskFreeText.Text = drive == null ? "—" : string.Format(Loc.T("ui.home.disk.available"), SizeText.OfBytes(drive.Free, 0));
+        DiskUsedText.Text = drive == null ? "—" : string.Format(Loc.T("ui.home.disk.capacity"), SizeText.OfBytes(drive.Used, 0), SizeText.OfBytes(drive.Total, 0));
+        DiskPercentText.Text = drive == null ? "—" : string.Format(Loc.T("ui.home.disk.percent"), drive.UsedPercent, drive.Name.TrimEnd('\\'));
+        DiskUsageBar.Value = drive?.UsedPercent ?? 0;
+        DiskUsageBar.Foreground = (Brush)FindResource(drive?.UsedPercent >= 90 ? "DangerBrush" : drive?.UsedPercent >= 75 ? "WarningBrush" : "PrimaryBrush");
+        DiskNoteText.Text = Loc.T(drive?.UsedPercent >= 90 ? "home.status.tight.detail" : "ui.home.disk.note");
 
-        // —— 启动项 + 已装应用（缓存枚举,并行） ——
-        int highImpact = 0, startupCount = 0, appCount = 0;
-        try
-        {
-            var startupTask = Task.Run(() => Services.EnumerationCache.GetStartup());
-            var appsTask = Task.Run(() => Services.EnumerationCache.GetApps());
-            await Task.WhenAll(startupTask, appsTask);
-            var items = startupTask.Result;
-            startupCount = items.Count(i => i.Enabled && i.CanToggle);
-            highImpact = items.Count(i => i.Enabled && i.Impact == "高");
-            appCount = appsTask.Result.Count;
-        }
-        catch { }
+        var scan = data.Scan;
+        var junkBytes = Math.Max(0, scan?.TotalBytes ?? 0);
+        LastScanText.Text = scan == null ? Loc.T("home.noscan") : string.Format(Loc.T("home.status.lastscan"), FormatTime(scan.Time));
+        StatusTitle.Text = Loc.T(scan == null ? "ui.home.pending" : "home.card.junk");
+        JunkSizeText.Text = scan == null ? "—" : SizeText.OfBytes(junkBytes);
+        JunkNoteText.Text = Loc.T(scan == null ? "home.noscan.detail" : "ui.home.scan.review");
+        ApplyHealth(scan, data.HighImpact, data.SystemFreePercent, data.RecycleBytes);
 
-        // —— 状态标题 ——
-        long junkBytes = last?.TotalBytes ?? 0;
-        double freePct = 100;
-        try
-        {
-            var drive = DriveInfo.GetDrives().First(d => d.IsReady && d.Name.StartsWith(Path.GetTempPath().Substring(0, 3)));
-            freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
-        }
-        catch { }
+        int highImpact = data.HighImpact ?? 0;
+        StartupCountText.Text = data.StartupCount == null ? "—" : string.Format(Loc.T("common.n.items"), highImpact > 0 ? highImpact : data.StartupCount);
+        StartupNoteText.Text = Loc.T(highImpact > 0 ? "home.card.startup.note.high" : "home.card.startup.note");
+        AppsCountText.Text = data.AppCount?.ToString() ?? "—";
+        var disk = SelectedAnalysis(data);
+        LargeCountText.Text = disk?.LargeFileCount is int count ? string.Format(Loc.T("common.n.items"), count)
+            : Loc.T(disk == null ? "home.card.large.pending" : "home.card.large.analyzed");
+        LargeNoteText.Text = disk == null ? Loc.T("home.card.large.note") : Loc.T("ui.home.large.note");
+        var recent = data.History.FirstOrDefault();
+        RecentActivityText.Text = recent == null ? Loc.T("home.activity.empty") : $"{recent.Title} · {FormatTime(recent.Time)}";
+        // Keep only aggregate data while collapsed; generate optional rows on demand.
+        if (DetailsExpander.IsExpanded) RenderDetails();
+    }
 
-        if (freePct < 10)
-        {
-            StatusTitle.Text = Services.Loc.T("home.status.tight");
-            StatusEllipse.Fill = (Brush)FindResource("DangerSoftBrush");
-            StatusIcon.Stroke = (Brush)FindResource("DangerBrush");
-            LastScanText.Text = Services.Loc.T("home.status.tight.detail");
-        }
-        else if (junkBytes > 3L * 1024 * 1024 * 1024 || highImpact > 0)
-        {
-            StatusTitle.Text = Services.Loc.T("home.status.suggest");
-            StatusEllipse.Fill = (Brush)FindResource("WarningSoftBrush");
-            StatusIcon.Data = (Geometry)FindResource("WarningIcon");
-            StatusIcon.Stroke = (Brush)FindResource("WarningBrush");
-            LastScanText.Text = string.Format(Services.Loc.T("home.status.suggest.detail"), SizeText.OfBytes(junkBytes), highImpact);
-        }
-        else
-        {
-            StatusTitle.Text = Services.Loc.T("home.status.good");
-            StatusEllipse.Fill = (Brush)FindResource("SuccessSoftBrush");
-            StatusIcon.Data = (Geometry)FindResource("CheckIcon");
-            StatusIcon.Stroke = (Brush)FindResource("SuccessBrush");
-            LastScanText.Text = last != null
-                ? string.Format(Services.Loc.T("home.status.lastscan"), FormatTime(last.Time))
-                : Services.Loc.T("home.noscan.detail");
-        }
+    private DiskSummary? SelectedAnalysis(HomeDashboardSnapshot data) => data.Analysis is { } disk &&
+        disk.Drive.Equals(_selectedDrive, StringComparison.OrdinalIgnoreCase) ? disk : null;
 
-        // —— 健康评分 ——
-        ApplyHealth(junkBytes, highImpact, freePct);
+    private void ApplyHealth(LastScanSummary? scan, int? highImpact, double? freePct, long binBytes)
+    {
+        var report = scan != null && highImpact.HasValue && freePct.HasValue
+            ? HealthScoreService.Compute(Math.Max(0, scan.TotalBytes), highImpact.Value, freePct.Value, binBytes) : null;
+        HealthScoreText.Text = report?.Score.ToString() ?? "—";
+        HealthLevelText.Text = Loc.T(report?.LevelKey ?? "ui.home.pending");
+        HealthDot.Fill = (Brush)FindResource(report?.BrushKey ?? "TextTertiaryBrush");
+    }
 
-        // —— 卡片数字（滚动动画） ——
-        if (last != null && junkBytes > 0)
-        {
-            CountUp.Animate(JunkSizeText, junkBytes, v => SizeText.OfBytes((long)v));
-            JunkNoteText.Text = string.Format(Services.Loc.T("home.card.junk.lastscan"), FormatTime(last.Time));
-        }
-        if (highImpact > 0)
-        {
-            CountUp.Animate(StartupCountText, highImpact,
-                v => string.Format(Services.Loc.T("common.n.items"), (int)v));
-            StartupNoteText.Text = Services.Loc.T("home.card.startup.note.high");
-        }
-        else
-        {
-            CountUp.Animate(StartupCountText, startupCount, v => ((int)v).ToString());
-            StartupNoteText.Text = Services.Loc.T("home.card.startup.note");
-        }
-        if (disk != null && disk.Categories.Count > 0)
-        {
-            LargeCountText.Text = Services.Loc.T("home.card.large.analyzed");
-            LargeNoteText.Text = Services.Loc.T("home.card.large.analyzed.note");
-        }
-        else
-        {
-            LargeCountText.Text = Services.Loc.T("home.card.large.pending");
-        }
-        if (appCount > 0)
-            CountUp.Animate(AppsCountText, appCount, v => ((int)v).ToString());
-        else
-            AppsCountText.Text = "—";
+    private void Details_Expanded(object sender, RoutedEventArgs e) => RenderDetails();
 
-        // —— 空间分析色块 ——
-        ApplyDiskCategories(disk);
+    private void Details_Collapsed(object sender, RoutedEventArgs e)
+    {
+        CategoryList.ItemsSource = null;
+        StatsBars.Children.Clear();
+        SuggestList.ItemsSource = null;
+    }
 
-        // —— 最近活动 ——
-        var acts = HistoryService.LoadAll().Take(4).Select(a => new
+    private void RenderDetails()
+    {
+        if (_lastDashboard is not { } data) return;
+        var disk = SelectedAnalysis(data);
+        var categories = disk?.Categories.Take(6).Select(c => new HomeCategoryRow(Loc.CategoryDisplay(c.Name),
+            SizeText.OfBytes(Math.Max(0, c.Bytes), 0),
+            $"{(disk.UsedBytes > 0 ? Math.Clamp(c.Bytes * 100.0 / disk.UsedBytes, 0, 100) : 0):F1}%")).ToList();
+        CategoryList.ItemsSource = categories;
+        AnalysisEmpty.Visibility = categories is { Count: > 0 } ? Visibility.Collapsed : Visibility.Visible;
+        AnalysisNote.Text = disk == null ? _selectedDrive : string.Format(Loc.T("ui.home.analysis.note"), disk.Drive.TrimEnd('\\'), FormatTime(disk.Time));
+        BuildStats(data.History);
+        var suggests = new List<SuggestItem>(3);
+        if (data.Scan is { } scan)
         {
-            a.Title,
-            TimeText = FormatTime(a.Time),
-        }).ToList();
-        ActivityList.ItemsSource = acts;
-        NoActivityPanel.Visibility = acts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        // —— 清理统计（累计 + 近 7 日） ——
-        BuildStats();
-        if (_scrollToStats)
-        {
-            _scrollToStats = false;
-            await Task.Delay(100);
-            StatsBars.BringIntoView();
+            foreach (var rule in scan.Rules.Where(r => r.Size > 200L * 1024 * 1024).OrderByDescending(r => r.Size).Take(2))
+                suggests.Add(new SuggestItem { Name = Loc.RuleName(rule.Id, rule.Name), Note = Loc.T("ui.home.review"),
+                    SizeText = Loc.T("common.approx") + SizeText.OfBytes(rule.Size),
+                    ActionText = Loc.T(rule.Risk <= (int)RiskLevel.Low && rule.Group <= (int)RuleGroup.AppCache ? "ui.quick.title" : "ui.home.review.items"),
+                    RuleId = rule.Risk <= (int)RiskLevel.Low && rule.Group <= (int)RuleGroup.AppCache ? rule.Id : null });
         }
-
-        // —— 智能建议 ——
-        var suggests = new List<SuggestItem>();
-        if (last != null)
-        {
-            foreach (var r in last.Rules.Where(r => r.Size > 200 * 1024 * 1024).OrderByDescending(r => r.Size).Take(2))
-            {
-                suggests.Add(new SuggestItem
-                {
-                    Name = Services.Loc.RuleName(r.Id, r.Name),
-                    Note = Services.Loc.T("home.suggest.note.safe"),
-                    SizeText = Services.Loc.T("common.approx") + SizeText.OfBytes(r.Size),
-                    ActionText = Services.Loc.T("home.suggest.clean"),
-                    RuleId = r.Id,
-                });
-            }
-        }
-        if (highImpact > 0)
-        {
-            suggests.Add(new SuggestItem
-            {
-                Name = Services.Loc.T("home.suggest.startup.title"),
-                Note = string.Format(Services.Loc.T("home.suggest.startup.note"), highImpact),
-                SizeText = string.Format(Services.Loc.T("common.n.items"), highImpact),
-                ActionText = Services.Loc.T("home.suggest.optimize"),
-                IsStartup = true,
-            });
-        }
+        if (data.HighImpact is > 0)
+            suggests.Add(new SuggestItem { Name = Loc.T("home.suggest.startup.title"), Note = string.Format(Loc.T("home.suggest.startup.note"), data.HighImpact),
+                SizeText = string.Format(Loc.T("common.n.items"), data.HighImpact), ActionText = Loc.T("home.suggest.optimize"), IsStartup = true });
         SuggestList.ItemsSource = suggests;
         NoSuggestText.Visibility = suggests.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    // ————— 环形仪表 + 实时监控 —————
-
-    private void BuildDiskRing()
+    private void BuildStats(List<ActivityRecord> history)
     {
-        _diskRing = new RingGauge(108, 10);
-        _diskCenter = new TextBlock
+        long total = 0;
+        int count = 0;
+        var today = DateTime.Today;
+        var days = new long[7];
+        foreach (var item in history)
         {
-            FontSize = 19,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("TextPrimaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        var center = new StackPanel();
-        center.Children.Add(_diskCenter);
-        center.Children.Add(new TextBlock
-        {
-            Text = Services.Loc.T("home.disk.center"),
-            FontSize = 10.5,
-            Foreground = (Brush)FindResource("TextTertiaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Margin = new Thickness(0, 1, 0, 0),
-        });
-        _diskRing.Center = center;
-        DiskRingHost.Children.Add(_diskRing);
-    }
-
-    private void BuildMonitor()
-    {
-        Brush Primary(string key) => (Brush)FindResource(key);
-
-        StackPanel MetricBlock(RingGauge ring, TextBlock center, string label, out TextBlock detail)
-        {
-            ring.Center = center;
-            detail = new TextBlock
-            {
-                FontSize = 11.5,
-                Foreground = (Brush)FindResource("TextTertiaryBrush"),
-                Margin = new Thickness(0, 3, 0, 0),
-            };
-            var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            sp.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = 12.5,
-                FontWeight = FontWeights.Bold,
-                Foreground = (Brush)FindResource("TextPrimaryBrush"),
-            });
-            sp.Children.Add(detail);
-            var block = new StackPanel { Orientation = Orientation.Horizontal };
-            block.Children.Add(ring);
-            block.Children.Add(new Border { Width = 12 });
-            block.Children.Add(sp);
-            return block;
+            if (item.Type is not ("Clean" or "AutoClean")) continue;
+            count++;
+            var bytes = Math.Max(0, item.Bytes);
+            total += bytes;
+            int age = (today - item.Time.Date).Days;
+            if (age is >= 0 and < 7) days[6 - age] += bytes;
         }
-
-        _cpuRing = new RingGauge(58, 7) { ArcBrush = Primary("PrimaryBrush") };
-        _cpuCenter = new TextBlock
-        {
-            FontSize = 12.5,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("TextPrimaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        CpuHost.Children.Add(MetricBlock(_cpuRing, _cpuCenter, Services.Loc.T("home.mon.cpu"), out _cpuDetail));
-
-        _ramRing = new RingGauge(58, 7) { ArcBrush = Primary("TealBrush") };
-        _ramCenter = new TextBlock
-        {
-            FontSize = 12.5,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("TextPrimaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        RamHost.Children.Add(MetricBlock(_ramRing, _ramCenter, Services.Loc.T("home.mon.ram"), out _ramDetail));
-
-        var up = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        up.Children.Add(new TextBlock
-        {
-            Text = Services.Loc.T("home.mon.uptime"),
-            FontSize = 12.5,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("TextPrimaryBrush"),
-        });
-        _uptimeText = new TextBlock
-        {
-            FontSize = 11.5,
-            Foreground = (Brush)FindResource("TextTertiaryBrush"),
-            Margin = new Thickness(0, 3, 0, 0),
-        };
-        up.Children.Add(_uptimeText);
-        UptimeHost.Children.Add(up);
-
-        // 实时呼吸点
-        // 有限次呼吸后静止(PRD §42 空闲 CPU <1%:无限动画会持续作废
-        // 带阴影卡片的渲染,常驻数核 CPU)。实时感由 1.2s 的数值刷新承担。
-        var pulse = new DoubleAnimation(0.35, 1, TimeSpan.FromSeconds(1.6))
-        {
-            AutoReverse = true,
-            RepeatBehavior = new RepeatBehavior(4),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
-            FillBehavior = FillBehavior.Stop,
-        };
-        LiveDot.BeginAnimation(OpacityProperty, pulse);
-    }
-
-    // ————— 健康评分 —————
-
-    private void BuildHealth()
-    {
-        _healthRing = new RingGauge(118, 12);
-        _healthScoreText = new TextBlock
-        {
-            FontSize = 30,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("TextPrimaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        var center = new StackPanel();
-        center.Children.Add(_healthScoreText);
-        center.Children.Add(new TextBlock
-        {
-            Text = Services.Loc.T("home.health.unit"),
-            FontSize = 10.5,
-            Foreground = (Brush)FindResource("TextTertiaryBrush"),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Margin = new Thickness(0, 1, 0, 0),
-        });
-        _healthRing.Center = center;
-        HealthRingHost.Children.Add(_healthRing);
-    }
-
-    private void ApplyHealth(long junkBytes, int highImpact, double freePct)
-    {
-        long binBytes = 0;
-        try { (binBytes, _) = ShellUtil.QueryRecycleBin(); } catch { }
-        var r = Core.Analysis.HealthScoreService.Compute(junkBytes, highImpact, freePct, binBytes);
-
-        if (_healthRing != null && _healthScoreText != null)
-        {
-            _healthRing.ArcBrush = (Brush)FindResource(r.BrushKey);
-            _healthRing.AnimateTo(r.Score);
-            CountUp.Animate(_healthScoreText, r.Score, v => ((int)v).ToString());
-        }
-        HealthLevelText.Text = Services.Loc.T(r.LevelKey);
-        HealthLevelText.Foreground = (Brush)FindResource(r.BrushKey);
-
-        HealthChips.Children.Clear();
-        void Chip(string text)
-        {
-            var bd = new Border
-            {
-                Background = (Brush)FindResource("CardBgBrush"),
-                BorderBrush = (Brush)FindResource("CardBorderBrush"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(7),
-                Padding = new Thickness(9, 3, 9, 4),
-                Margin = new Thickness(0, 4, 6, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
-            bd.Child = new TextBlock
-            {
-                Text = text,
-                FontSize = 10.5,
-                Foreground = (Brush)FindResource("TextSecondaryBrush"),
-            };
-            HealthChips.Children.Add(bd);
-        }
-        Chip(string.Format(Services.Loc.T("home.health.junk"), SizeText.OfBytes(junkBytes)));
-        Chip(string.Format(Services.Loc.T("home.health.high"), highImpact));
-        Chip(string.Format(Services.Loc.T("home.health.free"), freePct));
-    }
-
-    private void Health_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SmartScan, "start");
-
-    // ————— 清理统计 —————
-
-    private void BuildStats()
-    {
-        var hist = HistoryService.LoadAll();
-        long totalFreed = hist.Where(h => h.Bytes > 0).Sum(h => h.Bytes);
-        int cleanCount = hist.Count(h => h.Type is "Clean" or "AutoClean");
-        StatsTotalText.Text = string.Format(Services.Loc.T("home.stats.total"), SizeText.OfBytes(totalFreed, 0), cleanCount);
-
+        StatsTotalText.Text = string.Format(Loc.T("home.stats.total"), SizeText.OfBytes(total, 0), count);
+        long max = Math.Max(1, days.Max());
         StatsBars.Children.Clear();
-        var days = new (DateTime day, long bytes)[7];
-        for (int i = 0; i < 7; i++)
-        {
-            var d = DateTime.Today.AddDays(i - 6);
-            days[i] = (d, hist.Where(h => h.Time.Date == d && h.Bytes > 0).Sum(h => h.Bytes));
-        }
-        long max = Math.Max(1, days.Max(d => d.bytes));
-        foreach (var (day, bytes) in days)
-        {
-            var cell = new Grid { Margin = new Thickness(0, 0, 7, 0) };
-            cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            cell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-            var bar = new Border
+        for (int i = 0; i < days.Length; i++)
+            StatsBars.Children.Add(new Border
             {
-                Height = Math.Max(3, 46.0 * bytes / max),
-                CornerRadius = new CornerRadius(3),
-                Background = bytes > 0
-                    ? (day == DateTime.Today ? (Brush)FindResource("PrimaryBrush") : BrushWithOpacity("PrimaryBrush", 0.45))
-                    : (Brush)FindResource("TrackBrush"),
-                VerticalAlignment = VerticalAlignment.Bottom,
-                ToolTip = $"{day:MM-dd} · {(bytes > 0 ? SizeText.OfBytes(bytes, 0) : "0 B")}",
-            };
-            cell.Children.Add(bar);
-            StatsBars.Children.Add(cell);
-        }
+                Height = Math.Max(3, 38.0 * days[i] / max), CornerRadius = new CornerRadius(3),
+                Background = (Brush)FindResource(days[i] > 0 ? "PrimaryBrush" : "TrackBrush"),
+                Opacity = i == 6 || days[i] == 0 ? 1 : 0.5,
+                Margin = new Thickness(0, 0, 7, 0), VerticalAlignment = VerticalAlignment.Bottom,
+                ToolTip = $"{today.AddDays(i - 6):MM-dd} · {SizeText.OfBytes(days[i], 0)}",
+            });
     }
 
-    private Brush BrushWithOpacity(string key, double opacity)
+    internal bool MonitorRunning => _monitorTimer?.IsEnabled == true;
+    private void WindowStateChanged(object? sender, EventArgs e) => UpdateMonitorState();
+    private void UpdateMonitorState()
     {
-        var b = ((Brush)FindResource(key)).Clone();
-        b.Opacity = opacity;
-        return b;
+        if (IsLoaded && IsVisible && _main.IsVisible && _main.WindowState != WindowState.Minimized && _main.CanInteract) StartMonitor();
+        else StopMonitor();
     }
 
     private void StartMonitor()
     {
-        StopMonitor();
-        _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
-        _monitorTimer.Tick += (s, e) => UpdateMonitor();
+        if (MonitorRunning) return;
+        if (_monitorTimer == null)
+        {
+            _monitorTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
+            _monitorTimer.Tick += (_, _) => UpdateMonitor();
+        }
+        _monitor.Reset();
         _monitorTimer.Start();
         UpdateMonitor();
     }
 
     private void StopMonitor() => _monitorTimer?.Stop();
-
-    private void UpdateMonitor()
+    internal void UpdateMonitor()
     {
-        try
-        {
-            var snap = _monitor.Sample();
-            var cpu = snap.CpuPercent;
-            if (_cpuRing != null && _cpuCenter != null)
-            {
-                // CPU 环随负载变色,与内存环状态语义一致
-                if (cpu is >= 90) _cpuRing.ArcBrush = (Brush)FindResource("DangerBrush");
-                else if (cpu is >= 75) _cpuRing.ArcBrush = (Brush)FindResource("WarningBrush");
-                else _cpuRing.ArcBrush = (Brush)FindResource("PrimaryBrush");
-                _cpuRing.SetPercent(cpu ?? 0);
-                var cpuText = cpu.HasValue ? cpu.Value.ToString("F0") + "%" : "—";
-                if (_lastCpuText != cpuText) { _cpuCenter.Text = cpuText; _lastCpuText = cpuText; }
-            }
-            if (_cpuDetail != null)
-                _cpuDetail.Text = string.Format(Services.Loc.T("home.mon.cores"), Environment.ProcessorCount);
-
-            var ramPct = snap.RamPercent;
-            if (_ramRing != null && _ramCenter != null && _ramDetail != null)
-            {
-                _ramRing.ArcBrush = ramPct >= 90 ? (Brush)FindResource("DangerBrush")
-                    : ramPct >= 75 ? (Brush)FindResource("WarningBrush")
-                    : (Brush)FindResource("TealBrush");
-                _ramRing.SetPercent(ramPct);
-                var ramText = ramPct.ToString("F0") + "%";
-                if (_lastRamText != ramText) { _ramCenter.Text = ramText; _lastRamText = ramText; }
-                _ramDetail.Text = string.Format(Services.Loc.T("home.mon.ram.f"),
-                    SizeText.OfBytes(snap.RamUsedBytes, 0), SizeText.OfBytes(snap.RamTotalBytes, 0));
-            }
-            if (_uptimeText != null)
-                _uptimeText.Text = FormatUptime(snap.Uptime);
-        }
+        try { ApplyMonitorSnapshot(_monitor.Sample()); }
         catch { }
     }
 
-    private void RenderDriveChips(List<DriveInfo> all, DriveInfo? selected)
+    internal void ApplyMonitorSnapshot(SystemMonitorService.Snapshot snapshot)
     {
-        var host = this.FindName("DriveChipHost") as StackPanel;
-        if (host == null) return;
-        host.Children.Clear();
-        if (all.Count < 2) return;
-        foreach (var d in all)
+        int cpu = snapshot.CpuPercent is double value && double.IsFinite(value) ? (int)Math.Round(Math.Clamp(value, 0, 100)) : -1;
+        int ram = snapshot.RamTotalBytes > 0 ? (int)Math.Round(Math.Clamp(snapshot.RamPercent, 0, 100)) : -1;
+        if (cpu != _lastCpu)
         {
-            var isSel = d.Name.Equals(selected?.Name, StringComparison.OrdinalIgnoreCase);
-            var rb = new RadioButton
+            _lastCpu = cpu;
+            CpuPercentText.Text = cpu < 0 ? "—" : $"{cpu}%";
+            CpuBar.Value = Math.Max(0, cpu);
+            CpuBar.Foreground = LoadBrush(cpu);
+        }
+        if (ram != _lastRam)
+        {
+            _lastRam = ram;
+            RamPercentText.Text = ram < 0 ? "—" : $"{ram}%";
+            RamBar.Value = Math.Max(0, ram);
+            RamBar.Foreground = LoadBrush(ram);
+        }
+        if (_lastRamUsed != snapshot.RamUsedBytes || _lastRamTotal != snapshot.RamTotalBytes)
+        {
+            _lastRamUsed = snapshot.RamUsedBytes; _lastRamTotal = snapshot.RamTotalBytes;
+            RamDetailText.Text = ram < 0 ? "—" : string.Format(Loc.T("home.mon.ram.f"), SizeText.OfBytes(snapshot.RamUsedBytes, 0), SizeText.OfBytes(snapshot.RamTotalBytes, 0));
+        }
+        var minute = (long)snapshot.Uptime.TotalMinutes;
+        if (_lastUptimeMinute != minute) { _lastUptimeMinute = minute; UptimeText.Text = FormatUptime(snapshot.Uptime); }
+    }
+
+    private Brush LoadBrush(int percent) => (Brush)FindResource(percent >= 90 ? "DangerBrush" : percent >= 75 ? "WarningBrush" : "PrimaryBrush");
+
+    private void RenderDriveChips(List<HomeDashboardSnapshot.Disk> all, HomeDashboardSnapshot.Disk? selected)
+    {
+        DriveChipHost.Children.Clear();
+        foreach (var drive in all)
+        {
+            var chip = new RadioButton
             {
-                Style = (Style)FindResource("PillTab"),
-                GroupName = "homedrive",
-                Content = d.Name.TrimEnd(System.IO.Path.DirectorySeparatorChar),
-                FontSize = 11.5,
-                Padding = new Thickness(10, 3, 10, 4),
-                Margin = new Thickness(0, 0, 8, 0),
-                IsChecked = isSel,
+                Style = (Style)FindResource("PillTab"), GroupName = "homedrive",
+                Content = drive.Name.TrimEnd(System.IO.Path.DirectorySeparatorChar), FontSize = 11,
+                Padding = new Thickness(9, 2, 9, 3), Margin = new Thickness(0, 0, 5, 0),
+                IsChecked = drive.Name.Equals(selected?.Name, StringComparison.OrdinalIgnoreCase),
             };
-            var name = d.Name;
-            rb.Checked += (s, e) => { if (name != _selectedDrive) { _selectedDrive = name; _ = RefreshAsync(); } };
-            host.Children.Add(rb);
+            var name = drive.Name;
+            chip.Checked += (_, _) => { if (name != _selectedDrive) { _selectedDrive = name; _ = RefreshAsync(); } };
+            DriveChipHost.Children.Add(chip);
         }
     }
 
-    private static string FormatUptime(TimeSpan d)
+    private static string FormatUptime(TimeSpan time)
     {
-        if (d.TotalDays >= 1) return string.Format(Services.Loc.T("home.mon.uptime.d"), (int)d.TotalDays, d.Hours);
-        if (d.TotalHours >= 1) return string.Format(Services.Loc.T("home.mon.uptime.h"), (int)d.TotalHours, d.Minutes);
-        return string.Format(Services.Loc.T("home.mon.uptime.m"), Math.Max(1, (int)d.TotalMinutes));
+        if (time.TotalDays >= 1) return string.Format(Loc.T("home.mon.uptime.d"), (int)time.TotalDays, time.Hours);
+        if (time.TotalHours >= 1) return string.Format(Loc.T("home.mon.uptime.h"), (int)time.TotalHours, time.Minutes);
+        return string.Format(Loc.T("home.mon.uptime.m"), Math.Max(1, (int)time.TotalMinutes));
     }
 
-    private static string SystemDrive()
+    internal static string FormatTime(DateTime time)
     {
-        var tmp = Path.GetTempPath();
-        return tmp.Substring(0, 3);
+        var elapsed = DateTime.Now - time;
+        if (elapsed.TotalMinutes < 1) return Loc.T("time.now");
+        if (elapsed.TotalHours < 1) return string.Format(Loc.T("time.minago"), (int)elapsed.TotalMinutes);
+        if (elapsed.TotalDays < 1) return string.Format(Loc.T("time.today"), time.ToString("HH:mm"));
+        if (elapsed.TotalDays < 2) return string.Format(Loc.T("time.yesterday"), time.ToString("HH:mm"));
+        return time.ToString("MM-dd HH:mm");
     }
 
-    private void ApplyDiskCategories(DiskSummary? disk)
-    {
-        var borders = new[] { Cat0, Cat1, Cat2, Cat3, Cat4, Cat5 };
-        if (disk == null || disk.Categories.Count == 0)
-        {
-            AnalysisEmpty.Visibility = Visibility.Visible;
-            foreach (var b in borders) b.Opacity = 0.12;
-            return;
-        }
-        AnalysisEmpty.Visibility = Visibility.Collapsed;
-        var top = disk.Categories.Take(6).ToList();
-        for (int i = 0; i < borders.Length; i++)
-        {
-            var bd = borders[i];
-            bd.Opacity = 1;
-            bd.Child = null;
-            if (i < top.Count)
-            {
-                var c = top[i];
-                var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 8, 8, 8) };
-                sp.Children.Add(new TextBlock
-                {
-                    Text = Services.Loc.CategoryDisplay(c.Name),
-                    FontSize = 12.5,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Colors.White),
-                });
-                sp.Children.Add(new TextBlock
-                {
-                    Text = SizeText.OfBytes(c.Bytes, 0),
-                    FontSize = 15,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Colors.White),
-                    Margin = new Thickness(0, 3, 0, 0),
-                });
-                sp.Children.Add(new TextBlock
-                {
-                    Text = $"{c.Percent:F1}%",
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush(Color.FromArgb(210, 255, 255, 255)),
-                    Margin = new Thickness(0, 2, 0, 0),
-                });
-                bd.Background = (Brush)new BrushConverter().ConvertFromString(c.Hex)!;
-                bd.Child = sp;
-            }
-            else
-            {
-                bd.Opacity = 0.12;
-            }
-        }
-    }
-
-    internal static string FormatTime(DateTime t)
-    {
-        var d = DateTime.Now - t;
-        if (d.TotalMinutes < 1) return Services.Loc.T("time.now");
-        if (d.TotalHours < 1) return string.Format(Services.Loc.T("time.minago"), (int)d.TotalMinutes);
-        if (d.TotalDays < 1) return string.Format(Services.Loc.T("time.today"), t.ToString("HH:mm"));
-        if (d.TotalDays < 2) return string.Format(Services.Loc.T("time.yesterday"), t.ToString("HH:mm"));
-        return t.ToString("MM-dd HH:mm");
-    }
-
-    // ————— 事件 —————
-
-    private void BtnScan_Click(object sender, RoutedEventArgs e)
-    {
-        _main.Navigate(PageKey.SmartScan, "start");
-    }
-
-    private void BtnMore_Click(object sender, RoutedEventArgs e)
-    {
-        var menu = new ContextMenu();
-        void AddItem(string text, PageKey key)
-        {
-            var mi = new MenuItem { Header = text };
-            mi.Click += (s, a) => _main.Navigate(key);
-            menu.Items.Add(mi);
-        }
-        AddItem(Services.Loc.T("nav.clean"), PageKey.CleanSpace);
-        AddItem(Services.Loc.T("nav.space"), PageKey.SpaceAnalysis);
-        AddItem(Services.Loc.T("nav.startup"), PageKey.Startup);
-        AddItem(Services.Loc.T("nav.apps"), PageKey.Apps);
-        AddItem(Services.Loc.T("nav.toolbox"), PageKey.Toolbox);
-        menu.PlacementTarget = BtnMore;
-        menu.Placement = PlacementMode.Bottom;
-        menu.IsOpen = true;
-    }
-
-    private void CardJunk_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.CleanSpace);
+    private void BtnScan_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SmartScan, "start");
+    private void BtnQuickClean_Click(object sender, RoutedEventArgs e) => QuickCleanPlan.Open(_main);
+    private void Health_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SmartScan);
+    private void CardJunk_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SmartScan);
     private void CardStartup_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.Startup);
-    private void CardLarge_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SpaceAnalysis, "large");
+    private void CardLarge_Click(object sender, RoutedEventArgs e) => OpenAnalysis(true);
     private void CardApps_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.Apps);
-    private void BtnAnalyze_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SpaceAnalysis, "analyze");
-    private void BtnAnalyze2_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.SpaceAnalysis);
+    private void BtnAnalyze_Click(object sender, RoutedEventArgs e) => OpenAnalysis();
+    private void OpenAnalysis(bool large = false) => _main.Navigate(PageKey.SpaceAnalysis, new SpaceAnalysisPage.DriveRequest(_selectedDrive, large));
     private void BtnHistory_Click(object sender, RoutedEventArgs e) => _main.Navigate(PageKey.Toolbox, "history");
-
-    private async void SuggestAction_Click(object sender, RoutedEventArgs e)
+    private void SuggestAction_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: SuggestItem item }) return;
-        if (item.IsStartup)
-        {
-            _main.Navigate(PageKey.Startup);
-            return;
-        }
-        if (item.RuleId == null) return;
-
-        // 单规则快速清理（确认后执行）
-        var scanner = new ScannerService();
-        var rule = scanner.Rules.FirstOrDefault(r => r.Id == item.RuleId);
-        if (rule == null) return;
-        var ok = DialogService.Confirm(_main, string.Format(Services.Loc.T("dlg.quickclean.title"), Services.Loc.RuleName(rule.Id, rule.Name)),
-            string.Format(Services.Loc.T("dlg.quickclean.msg"), item.SizeText), Services.Loc.T("home.suggest.clean"));
-        if (!ok) return;
-        BtnScan.IsEnabled = false;
-        try
-        {
-            var svc = new QuickCleanHelper(_main);
-            var freed = await svc.CleanSingleRuleAsync(rule);
-            if (freed >= 0)
-            {
-                _main.ShowToast(string.Format(Services.Loc.T("toast.cleaned"), SizeText.OfBytes(freed)));
-                await RefreshAsync();
-            }
-        }
-        finally
-        {
-            BtnScan.IsEnabled = true;
-        }
+        if (item.IsStartup) _main.Navigate(PageKey.Startup);
+        else if (item.RuleId != null) QuickCleanPlan.Open(_main, item.RuleId);
+        else _main.Navigate(PageKey.SmartScan);
     }
 }
+
+internal sealed record HomeCategoryRow(string Name, string SizeText, string PercentText);
 
 public sealed class SuggestItem
 {
@@ -674,36 +294,6 @@ public sealed class SuggestItem
     public string Note { get; set; } = "";
     public string SizeText { get; set; } = "";
     public string ActionText { get; set; } = "立即清理";
-    public string? RuleId { get; set; }
     public bool IsStartup { get; set; }
-}
-
-/// <summary>单规则快速清理（首页建议 / 清理空间页共用）。</summary>
-public sealed class QuickCleanHelper
-{
-    private readonly MainWindow _main;
-    public QuickCleanHelper(MainWindow main) => _main = main;
-
-    /// <summary>返回释放字节；取消返回 -1。</summary>
-    public async Task<long> CleanSingleRuleAsync(IScanRule rule)
-    {
-        var scanner = new ScannerService();
-        var ctx = scanner.BuildContext(CancellationToken.None);
-        var results = await scanner.ScanAsync(new[] { rule }, ctx, null);
-        var res = results[0];
-        if (res.Items.Count == 0)
-        {
-            _main.ShowToast(Services.Loc.T("toast.nothing"), ToastType.Info);
-            return -1;
-        }
-        var svc = new CleanService();
-        var progress = new Progress<CleanProgress>(p => { });
-        var summary = await svc.CleanAsync(
-        [
-            new CleanRequestRule { Rule = rule, Result = res, Selected = res.Items.ToList() },
-        ], CancellationToken.None, progress);
-        if (summary.FailCount == 0 && summary.SkipCount == 0)
-            return summary.FreedBytes;
-        return summary.FreedBytes;
-    }
+    public string? RuleId { get; set; }
 }

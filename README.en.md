@@ -107,7 +107,7 @@ powershell -File scripts\publish.ps1
 - 💚 WeChat Official Account: search "**馋熊冰**" in WeChat
 
 <div align="center">
-  <img src="docs/images/wechat-search.png" alt="WeChat search: 馋熊冰" width="640"/>
+  <img src="docs/images/wechat-search.jpg" alt="WeChat search: 馋熊冰" width="640"/>
 </div>
 
 ## 📄 License

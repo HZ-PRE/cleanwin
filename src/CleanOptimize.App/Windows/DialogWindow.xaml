@@ -14,9 +14,10 @@
         <StackPanel>
             <TextBlock x:Name="TitleText" Text="标题" FontSize="17" FontWeight="Bold"
                        Foreground="{DynamicResource TextPrimaryBrush}"/>
-            <TextBlock x:Name="MessageText" Text="内容" FontSize="13.5" LineHeight="22"
-                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,0,0"
-                       TextWrapping="Wrap"/>
+            <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,12,0,0">
+                <TextBlock x:Name="MessageText" Text="内容" FontSize="13.5" LineHeight="22"
+                           Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+            </ScrollViewer>
             <StackPanel x:Name="ButtonRow" Orientation="Horizontal" HorizontalAlignment="Right"
                         Margin="0,24,0,0"/>
         </StackPanel>

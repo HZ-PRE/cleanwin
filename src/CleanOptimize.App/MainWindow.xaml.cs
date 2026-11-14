@@ -22,6 +22,22 @@ public partial class MainWindow : Window
     private bool _isClosing;
     internal bool IsClosed { get; private set; }
     internal bool CanInteract => !IsClosed && !_isClosing && !Dispatcher.HasShutdownStarted;
+    private readonly Services.UpdateService _updates = new();
+    private readonly CancellationTokenSource _updateCancellation = new();
+    private Task? _updateTask;
+    internal Services.UpdateResult UpdateState { get; private set; } = new(Services.UpdateOutcome.NotChecked);
+    internal bool CheckingUpdates { get; private set; }
+    internal bool UpdateInProgress { get; private set; }
+    internal event Action? UpdateStateChanged;
+    internal bool HasActiveOperations => Services.AutoCleanScheduler.Instance.IsRunning || _pages.Values.Any(page => page switch
+    {
+        SmartScanPage scan => scan.OperationActive,
+        CleanSpacePage clean => clean.OperationActive,
+        SpaceAnalysisPage space => space.OperationActive,
+        ToolboxPage tools => tools.OperationActive,
+        AppsPage apps => apps.OperationActive,
+        _ => false,
+    });
 
     /// <summary>启动深链指定的初始页(未设置则首页),由 Loaded 统一导航,避免竞态覆盖。</summary>
     public PageKey? InitialPage { get; set; }
@@ -40,7 +56,7 @@ public partial class MainWindow : Window
             _hasShown = true;
             ApplyWindowChromePadding();
             if (InitialPage is PageKey key) Navigate(key, InitialParam);
-            else Navigate(PageKey.SmartScan);
+            else Navigate(PageKey.Home);
         };
         StateChanged += (s, e) => ApplyWindowChromePadding();
         SourceInitialized += (s, e) => RestoreWindowBounds();
@@ -52,6 +68,8 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             IsClosed = true;
+            _updateCancellation.Cancel();
+            UpdateStateChanged = null;
             _toastTimer?.Stop();
             foreach (var page in _pages.Values)
             {
@@ -64,6 +82,44 @@ public partial class MainWindow : Window
     }
 
     // ————— 窗口位置记忆 —————
+    internal Task CheckForUpdatesAsync() => !CanInteract ? Task.CompletedTask :
+        _updateTask is { IsCompleted: false } ? _updateTask : _updateTask = CheckUpdatesCoreAsync();
+
+    private async Task CheckUpdatesCoreAsync()
+    {
+        CheckingUpdates = true;
+        UpdateStateChanged?.Invoke();
+        try
+        {
+            var result = await _updates.CheckAsync(_updateCancellation.Token);
+            if (CanInteract) ApplyUpdateResult(result);
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            CheckingUpdates = false;
+            if (CanInteract) UpdateStateChanged?.Invoke();
+        }
+    }
+
+    internal void ApplyUpdateResult(Services.UpdateResult result)
+    {
+        if (!CanInteract) return;
+        UpdateState = result;
+        NewUpdateBadge.Visibility = result.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+        NewUpdateBadge.ToolTip = result.HasUpdate ? "v" + result.Version : null;
+        UpdateStateChanged?.Invoke();
+    }
+
+    private void NewUpdate_Click(object sender, RoutedEventArgs e) => ShowUpdateDialog();
+    internal void ShowUpdateDialog()
+    {
+        if (!CanInteract || !UpdateState.HasUpdate || UpdateInProgress) return;
+        UpdateInProgress = true;
+        try { new Windows.UpdateWindow(this, UpdateState).ShowDialog(); }
+        finally { UpdateInProgress = false; }
+    }
+
 
     private void RestoreWindowBounds()
     {
@@ -163,6 +219,9 @@ public partial class MainWindow : Window
         }
         switch (item.Id)
         {
+            case "act.quickclean":
+                Services.QuickCleanPlan.Open(this);
+                break;
             case "act.quickscan":
                 Navigate(PageKey.SmartScan, "start");
                 break;
@@ -251,22 +310,10 @@ public partial class MainWindow : Window
         SyncNavChecked(key);
     }
 
-    /// <summary>页面入场过渡：淡入 + 上移。</summary>
-    private static void AnimatePageIn(Page page)
-    {
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        var tt = new TranslateTransform(0, 16);
-        page.RenderTransform = tt;
-        page.BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease });
-        tt.BeginAnimation(TranslateTransform.YProperty,
-            new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(260)) { EasingFunction = ease });
-    }
-
     private void SyncNavChecked(PageKey key)
     {
         if (key == PageKey.CleanSpace) key = PageKey.SmartScan;
-        foreach (var rb in new[] { NavHome, NavScan, NavClean, NavSpace, NavStartup, NavApps, NavToolbox, NavSettings })
+        foreach (var rb in new[] { NavHome, NavScan, NavSpace, NavStartup, NavApps, NavToolbox, NavSettings })
         {
             if ((string)rb.Tag == key.ToString())
             {

@@ -14,9 +14,11 @@ namespace CleanOptimize.App.Pages;
 
 public partial class SpaceAnalysisPage : Page, IParamPage
 {
+    internal sealed record DriveRequest(string Drive, bool Large);
     private readonly MainWindow _main;
     private readonly SpaceAnalysisService _analyzer = new();
     private CancellationTokenSource? _cts;
+    internal bool OperationActive => _cts != null;
     private DriveAnalysis? _lastAnalysis;
     private bool _onLargeTab;
 
@@ -40,6 +42,35 @@ public partial class SpaceAnalysisPage : Page, IParamPage
 
     public async void OnNavigated(object? param)
     {
+        if (param is DriveRequest request)
+        {
+            if (_cts != null) return;
+            if (DriveSelector.Items.Count == 0)
+                foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
+                    DriveSelector.Items.Add(drive.Name);
+            if (DriveSelector.Items.Contains(request.Drive)) DriveSelector.SelectedItem = request.Drive;
+            else if (DriveSelector.Items.Count > 0 && DriveSelector.SelectedIndex < 0) DriveSelector.SelectedIndex = 0;
+            if (_lastAnalysis != null && !string.Equals(_lastAnalysis.DriveName, CurrentDrive, StringComparison.OrdinalIgnoreCase))
+            {
+                _lastAnalysis = null;
+                FolderTree.Items.Clear();
+                CategoryRow.Children.Clear();
+                OverviewDriveText.Text = CurrentDrive;
+                OverviewUsedText.Text = "—";
+                OverviewTimeText.Text = "";
+                DiskUsageBar.Value = 0;
+                OverviewEmptyText.Visibility = Visibility.Visible;
+            }
+            // Navigation selects the drive; only the explicit Analyze button starts a full scan.
+            if (request.Large) TabLarge.IsChecked = true;
+            else TabOverview.IsChecked = true;
+            _onLargeTab = request.Large;
+            LargeCard.Visibility = request.Large ? Visibility.Visible : Visibility.Collapsed;
+            TreeCard.Visibility = !request.Large && _lastAnalysis != null ? Visibility.Visible : Visibility.Collapsed;
+            RenderLargeFiles();
+            UpdateAnalyzePanel();
+            return;
+        }
         if (param as string == "large")
         {
             TabLarge.IsChecked = true;
@@ -168,6 +199,7 @@ public partial class SpaceAnalysisPage : Page, IParamPage
                 TotalBytes = analysis.TotalBytes,
                 UsedBytes = analysis.UsedBytes,
                 FreeBytes = analysis.FreeBytes,
+                LargeFileCount = analysis.LargeFiles.Count,
                 Time = DateTime.Now,
                 Categories = analysis.Categories.Take(6).Select(c => new DiskSummary.CatItem
                 {
@@ -242,21 +274,18 @@ public partial class SpaceAnalysisPage : Page, IParamPage
     private void RenderTree(DriveAnalysis a)
     {
         FolderTree.Items.Clear();
-        var root = new FolderNodeVM(a.DriveName, a.Root.Size, a.Root.FileCount, a.DriveName);
+        var root = new FolderNodeVM(a.DriveName, a.Root.Size, a.DriveName);
         foreach (var child in a.Root.Children)
-            root.Children.Add(MakeNode(child, a.Root.Size));
+            root.Children.Add(MakeNode(child));
         FolderTree.Items.Add(root);
     }
 
-    private FolderNodeVM MakeNode(Core.Analysis.FolderNode node, long parentSize)
+    private FolderNodeVM MakeNode(Core.Analysis.FolderNode node)
     {
-        var vm = new FolderNodeVM(node.Name, node.Size, node.FileCount, node.FullPath)
-        {
-            Percent = parentSize > 0 ? node.Size * 100.0 / parentSize : 0,
-        };
+        var vm = new FolderNodeVM(node.Name, node.Size, node.FullPath);
         // 预置占位子节点以显示展开箭头，展开时再真实加载
         if (node.Size > 1024 * 1024)
-            vm.Children.Add(new FolderNodeVM("…", 0, 0, ""));
+            vm.Children.Add(new FolderNodeVM("…", 0, ""));
         return vm;
     }
 
@@ -268,11 +297,11 @@ public partial class SpaceAnalysisPage : Page, IParamPage
         vm.Children.Clear();
         foreach (var c in _lastAnalysis.GetChildren(vm.FullPath))
         {
-            var child = MakeNode(c, vm.SizeBytes);
+            var child = MakeNode(c);
             vm.Children.Add(child);
         }
         if (vm.Children.Count == 0)
-            vm.Children.Add(new FolderNodeVM(Services.Loc.T("space.nosubdir"), 0, 0, "done"));
+            vm.Children.Add(new FolderNodeVM(Services.Loc.T("space.nosubdir"), 0, "done"));
     }
 
     // ————— 大文件 —————
@@ -481,17 +510,12 @@ public sealed class FolderNodeVM
     public string Name { get; }
     public string FullPath { get; }
     public string SizeText { get; }
-    public string CountText { get; }
-    public long SizeBytes { get; }
-    public double Percent { get; init; }
     public ObservableCollection<FolderNodeVM> Children { get; } = new();
 
-    public FolderNodeVM(string name, long size, int files, string fullPath)
+    public FolderNodeVM(string name, long size, string fullPath)
     {
         Name = name;
         FullPath = fullPath;
-        SizeBytes = size;
         SizeText = size > 0 ? CleanOptimize.Core.Utils.SizeText.OfBytes(size) : "";
-        CountText = files > 0 ? string.Format(CleanOptimize.App.Services.Loc.T("space.nfiles"), files.ToString("N0")) : "";
     }
 }

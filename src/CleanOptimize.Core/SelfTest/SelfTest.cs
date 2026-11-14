@@ -364,6 +364,7 @@ public static class SelfTest
         }
 
         RegressionChecks.Run(Check);
+        CleanupOptimizationChecks.Run(Check);
         Console.WriteLine(failed == 0 ? "== 全部通过 ==" : $"== {failed} 项失败，禁止发布 ==");
         return failed == 0 ? 0 : 1;
     }

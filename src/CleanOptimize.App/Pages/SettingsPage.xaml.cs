@@ -18,10 +18,11 @@ public partial class SettingsPage : Page
     {
         InitializeComponent();
         _main = main;
-        AboutVersion.Text = "v" + (System.Reflection.Assembly.GetEntryAssembly()?
-            .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?
-            .InformationalVersion ?? "1.0.0");
+        AboutVersion.Text = "v" + UpdateService.CurrentVersion;
         BuildUi();
+        RefreshUpdateState();
+        Loaded += (_, _) => { _main.UpdateStateChanged += RefreshUpdateState; RefreshUpdateState(); };
+        Unloaded += (_, _) => _main.UpdateStateChanged -= RefreshUpdateState;
     }
 
     private void Save()
@@ -173,13 +174,8 @@ public partial class SettingsPage : Page
         // —— 通知 ——
         NotifySection.Children.Add(Row(Services.Loc.T("settings.row.notifydisk"), Services.Loc.T("settings.row.notifydisk.d"),
             Toggle(_s.NotifyDiskLow, v => _s.NotifyDiskLow = v)));
-        NotifySection.Children.Add(Row(Services.Loc.T("settings.row.notifyauto"), "",
+        NotifySection.Children.Add(Row(Loc.T("settings.row.notifyauto"), "",
             Toggle(_s.NotifyAutoCleanResult, v => _s.NotifyAutoCleanResult = v)));
-        NotifySection.Children.Add(Row(Services.Loc.T("settings.row.notifyweekly"), "",
-            Toggle(_s.NotifyWeeklyReport, v => _s.NotifyWeeklyReport = v)));
-        NotifySection.Children.Add(Row(Services.Loc.T("settings.row.notifynews"), Services.Loc.T("settings.row.notifynews.d"),
-            Toggle(_s.NotifyProductNews, v => _s.NotifyProductNews = v)));
-
         // —— 高级 ——
         var threadsBox = new ComboBox { MinWidth = 130 };
         for (int i = 2; i <= Math.Max(8, Environment.ProcessorCount); i += 2)
@@ -193,12 +189,6 @@ public partial class SettingsPage : Page
             if (threadsBox.SelectedItem is ComboBoxItem it) { _s.ScanThreads = (int)it.Tag!; Save(); }
         };
         AdvancedSection.Children.Add(Row(Services.Loc.T("settings.row.threads"), Services.Loc.T("settings.row.threads.d"), threadsBox));
-        AdvancedSection.Children.Add(Row(Services.Loc.T("settings.row.hidden"), "",
-            Toggle(_s.ScanHiddenFiles, v => _s.ScanHiddenFiles = v)));
-        var links = Toggle(false, _ => { });
-        links.IsEnabled = false;
-        AdvancedSection.Children.Add(Row(Services.Loc.T("settings.row.junction"), Services.Loc.T("settings.row.junction.d"), links));
-
         // 排障:打开数据与日志文件夹
         var logBtn = new Button
         {
@@ -217,8 +207,8 @@ public partial class SettingsPage : Page
         statsToggle.IsEnabled = false;
         var crashToggle = Toggle(false, _ => { });
         crashToggle.IsEnabled = false;
-        PrivacySection.Children.Add(Row(Services.Loc.T("settings.row.stats"), UpdateService.OfflineMessage, statsToggle));
-        PrivacySection.Children.Add(Row(Services.Loc.T("settings.row.crash"), UpdateService.OfflineMessage, crashToggle));
+        PrivacySection.Children.Add(Row(Services.Loc.T("settings.row.stats"), UpdateService.PrivacyMessage, statsToggle));
+        PrivacySection.Children.Add(Row(Services.Loc.T("settings.row.crash"), UpdateService.PrivacyMessage, crashToggle));
     }
 
     private void RenderExclusions()
@@ -416,7 +406,53 @@ public partial class SettingsPage : Page
 
     private void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
     {
-        UpdateStateText.Text = UpdateService.OfflineMessage;
-        _main.ShowToast(UpdateService.OfflineMessage, ToastType.Info);
+        _ = _main.CheckForUpdatesAsync();
+    }
+
+    private void UpdateAvailable_Click(object sender, RoutedEventArgs e) => _main.ShowUpdateDialog();
+    internal void RefreshUpdateState()
+    {
+        if (!_main.CanInteract) return;
+        var state = _main.UpdateState;
+        BtnCheckUpdate.IsEnabled = !_main.CheckingUpdates;
+        UpdateAvailableBadge.Visibility = state.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+        UpdateAvailableBadge.ToolTip = state.HasUpdate ? "v" + state.Version : null;
+        var key = _main.CheckingUpdates ? "update.checking" : state.Outcome switch
+        {
+            UpdateOutcome.Current => "update.latest",
+            UpdateOutcome.NoRelease => "ui.update.no.release",
+            UpdateOutcome.Failed => "update.failed",
+            _ => null,
+        };
+        if (key == null) UpdateStateText.Text = "";
+        else UpdateStateText.SetResourceReference(TextBlock.TextProperty, key);
+    }
+
+    private void WechatPreview_Click(object sender, RoutedEventArgs e) =>
+        CreateWechatPreview(ReferenceEquals(sender, WechatPayButton))?.ShowDialog();
+
+    internal Window? CreateWechatPreview(bool payment)
+    {
+        if (!_main.CanInteract) return null;
+        var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+        bitmap.BeginInit();
+        bitmap.UriSource = new Uri(payment ? "pack://application:,,,/Assets/wx_pay.png" : "pack://application:,,,/Assets/wechat-search.jpg");
+        bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        bitmap.DecodePixelWidth = 1024;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        var preview = new Window
+        {
+            Title = Services.Loc.T(payment ? "settings.about.pay" : "settings.about.follow"),
+            Width = Math.Min(payment ? 540 : 960, SystemParameters.WorkArea.Width),
+            Height = Math.Min(payment ? 780 : 460, SystemParameters.WorkArea.Height),
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ShowInTaskbar = false, Background = Brushes.White,
+            Content = new System.Windows.Controls.Image { Source = bitmap, Stretch = Stretch.Uniform, Margin = new Thickness(16) },
+        };
+        if (_main.IsLoaded) preview.Owner = _main;
+        preview.PreviewKeyDown += (_, args) => { if (args.Key == System.Windows.Input.Key.Escape) { args.Handled = true; preview.Close(); } };
+        preview.Closed += (_, _) => preview.Content = null;
+        return preview;
     }
 }

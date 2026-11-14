@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CoreAssembly Condition="'$(CoreAssembly)' == ''">../../src/CleanOptimize.Core/bin/Release/net8.0-windows/CleanOptimize.Core.dll</CoreAssembly>
+  </PropertyGroup>
+  <ItemGroup><Reference Include="CleanOptimize.Core"><HintPath>$(CoreAssembly)</HintPath></Reference></ItemGroup>
+</Project>

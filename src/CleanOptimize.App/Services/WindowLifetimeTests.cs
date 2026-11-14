@@ -9,6 +9,37 @@ namespace CleanOptimize.App.Services;
 /// <summary>Separate process so real OnMainWindowClose termination can be verified.</summary>
 internal static class WindowLifetimeTests
 {
+    internal static void RunUninstallChild(string[] args)
+    {
+        try
+        {
+            int readyIndex = Array.IndexOf(args, "--ready-file");
+            if (readyIndex < 0 || readyIndex + 1 >= args.Length) throw new ArgumentException("Missing ready file");
+            string ready = args[readyIndex + 1];
+            if (!Core.Utils.PathUtil.IsLocalPath(ready) || Core.Utils.PathUtil.HasReparseAncestor(ready)) throw new ArgumentException("Invalid ready file");
+            SettingsService.Current.CloseToTray = true;
+            var main = new MainWindow { Opacity = 0, ShowInTaskbar = false, ShowActivated = false };
+            if (args.Contains("--ignore-uninstall-signal"))
+            {
+                // Emulate an older version without the new shutdown listener.
+                App.Current.MainWindow = main;
+                App.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            }
+            else App.Current.AttachMainWindow(main);
+            main.Show();
+            main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            if (args.Contains("--hidden")) main.HideToTray();
+            File.WriteAllText(ready, SettingsService.DataDir);
+            Console.WriteLine("[READY] " + (main.IsVisible ? "normal" : "tray-hidden"));
+            main.Closed += (_, _) => Console.WriteLine("[PASS] Uninstall requested a real close, bypassing CloseToTray");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[FAIL] 卸载生命周期: " + ex);
+            App.Current.Shutdown(1);
+        }
+    }
+
     internal static void RunChild(bool forceClose)
     {
         try
@@ -26,11 +57,31 @@ internal static class WindowLifetimeTests
             main.Show();
             main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             if (main.Width != 900 || main.Height != 600) throw new InvalidOperationException("未恢复小窗口尺寸");
+            if (main.PageHost.Content is not Pages.HomePage home || !home.MonitorRunning)
+                throw new InvalidOperationException("默认首页或可见时采样未启动");
+            main.WindowState = WindowState.Minimized;
+            main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            if (home.MonitorRunning) throw new InvalidOperationException("最小化后仍在采样");
+            main.WindowState = WindowState.Normal;
+            main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+            if (!home.MonitorRunning) throw new InvalidOperationException("恢复后未采样");
+            for (int i = 0; i < 6; i++)
+            {
+                main.Navigate(PageKey.Toolbox);
+                main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                if (home.MonitorRunning) throw new InvalidOperationException("离开首页后仍在采样");
+                main.Navigate(PageKey.Home);
+                main.Dispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+                if (!ReferenceEquals(home, main.PageHost.Content) || !home.MonitorRunning)
+                    throw new InvalidOperationException("首页未复用或未恢复采样");
+            }
             for (int i = 0; i < 3; i++)
             {
                 main.Close();
                 if (main.IsClosed || main.IsVisible) throw new InvalidOperationException("系统关闭没有隐藏到托盘");
+                if (home.MonitorRunning) throw new InvalidOperationException("托盘隐藏后仍在采样");
                 if (!tray.OpenMainWindow() || !main.IsVisible) throw new InvalidOperationException("隐藏后不能恢复");
+                if (!home.MonitorRunning) throw new InvalidOperationException("托盘恢复后未采样");
             }
             if (forceClose) main.ForceClose();
             else { SettingsService.Current.CloseToTray = false; main.Close(); }

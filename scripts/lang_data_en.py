@@ -3,12 +3,12 @@
 
 EN = {
     # Common
-    "common.selected": "Selected", "common.freeable": "recoverable", "common.viewall": "View all",
+    "common.selected": "Selected",  "common.viewall": "View all",
     "common.loading": "Loading…", "common.scanning": "Scanning…", "common.n.items": "{0} items",
     "common.approx": "~", "btn.cancel": "Cancel", "btn.exit": "Exit", "btn.refresh": "Refresh",
     "btn.stopscan": "Stop scan", "btn.rescan": "Scan again", "btn.restore": "Restore", "btn.deleteperm": "Delete permanently",
     "btn.uninstall": "Uninstall", "btn.recycle": "Move to Recycle Bin", "btn.remove": "Remove", "btn.analyze.start": "Analyze",
-    "btn.scan.now": "Scan now", "btn.more": "More tools", "btn.clean.selected": "Clean selected",
+    "btn.scan.now": "Scan now",  "btn.clean.selected": "Clean selected",
     "btn.clean.start": "Start cleaning", "btn.done.home": "Back to Home", "btn.done.quarantine": "Open quarantine",
     "btn.emptybin": "Empty Recycle Bin", "btn.openbin": "Open Recycle Bin", "btn.scangroup": "Scan group",
     "btn.cleansel": "Clean selected", "btn.dupscan": "Start scan", "btn.dup.rescan": "Scan again",
@@ -23,27 +23,25 @@ EN = {
     "cat.audio": "Audio", "cat.documents": "Documents", "cat.archives": "Archives", "cat.other": "Other",
     "time.now": "Just now", "time.minago": "{0} min ago", "time.today": "Today {0}", "time.yesterday": "Yesterday {0}",
     # Home
-    "home.slogan": "Regular scans keep your PC at its best",
-    "home.status.good": "Your PC is in good shape", "home.status.suggest": "A cleanup is recommended", "home.status.tight": "Disk space is low",
-    "home.status.suggest.detail": "{0} of cleanable junk and {1} high-impact startup items found",
+
+      "home.status.tight": "Disk space is low",
+
     "home.status.tight.detail": "Less than 10% free on the system drive — clean up now",
     "home.status.lastscan": "Last scan: {0}", "home.noscan": "Not scanned yet", "home.noscan.detail": "Not scanned yet — click “Scan now” to begin",
-    "home.card.junk": "Cleanable junk", "home.card.junk.note": "Scan to see reclaimable space", "home.card.junk.lastscan": "Last scan {0}",
+    "home.card.junk": "Cleanable junk",
     "home.card.startup": "Startup items", "home.card.startup.note": "startup items run at boot", "home.card.startup.note.high": "high-impact items may slow boot",
     "home.card.large": "Large files", "home.card.large.note": "Analyze to find", "home.card.large.analyzed": "Analyzed",
-    "home.card.large.analyzed.note": "Click to browse large files", "home.card.large.pending": "Pending",
+     "home.card.large.pending": "Pending",
     "home.card.apps": "Installed apps", "home.card.apps.note": "Click to manage installed apps",
-    "home.disk.title": "Disk space (C:)", "home.disk.title.disk": "Disk space ({0})", "home.disk.total": "Total —",
-    "home.disk.used": "Used —", "home.disk.free": "Free —", "home.disk.total.f": "Total {0}",
-    "home.disk.used.f": "Used {0} ({1:F1}%)", "home.disk.free.f": "Free {0} ({1:F1}%)", "home.disk.more": "Where did my space go →",
+
     "home.space.title": "Space Analysis", "home.space.empty": "This drive hasn't been analyzed yet",
     "home.activity.title": "Recent activity", "home.activity.empty": "No activity yet — run a scan and cleanup",
     "home.suggest.title": "Smart suggestions", "home.suggest.empty": "All good — nothing needs attention",
-    "home.suggest.note.safe": "Safe to clean, no impact on your system", "home.suggest.clean": "Clean now", "home.suggest.optimize": "Optimize",
+      "home.suggest.optimize": "Optimize",
     "home.suggest.startup.title": "Startup suggestion", "home.suggest.startup.note": "{0} high-impact startup items found — consider optimizing",
-    "home.hero.note": "A cleaner PC,\na smoother run!",
+
     # Smart scan
-    "scan.start": "Start scan", "scan.cover": "One scan covers: system junk · browser caches · app caches · Recycle Bin",
+     "scan.cover": "One scan covers: system junk · browser caches · app caches · Recycle Bin",
     "scan.privacy": "Everything runs locally; only safe items are pre-selected, and high-risk items are never auto-selected.",
     "scan.preparing": "Preparing…", "scan.found": "Found —", "scan.done": "Scan complete",
     "scan.reselectall": "Select safe items",
@@ -80,7 +78,7 @@ EN = {
     "dlg.clean.selected.title": "Clean the selected items?", "dlg.clean.amount": "About to clean {0} of data.",
     "dlg.clean.nrules": "About to clean {0} categories, {1} in total.", "dlg.clean.confirmitems": "Items that need review:",
     "dlg.clean.quarantinehint": "Restorable files will be moved to quarantine.",
-    "dlg.quickclean.title": "Clean {0}?", "dlg.quickclean.msg": "About {0} will be freed.\nRestorable files go to quarantine.",
+
     # Space analysis
     "space.tab.overview": "Overview", "space.tab.large": "Large files", "space.tree.title": "Folder usage ranking",
     "space.tree.hint": "Click to expand; system links and inaccessible folders are skipped",
@@ -91,7 +89,7 @@ EN = {
     "space.used.f": "Used {0} / {1} ({2:F1}%), free {3}", "space.used.f2": "Used {0} / {1}, free {2}",
     "space.analyzed.f": "Analyzed {0} · {1:N0} files · {2:F0} s", "space.lastanalysis": "Last analysis: {0}",
     "space.notanalyzed": "This drive hasn't been analyzed yet", "space.large.filter": "Size filter",
-    "space.large.none": "No files larger than {0:F0} MB found", "space.modified": "Modified", "space.file": "FILE",
+    "space.large.none": "No files larger than {0:F0} MB found",
     "space.recycle.title": "Move to Recycle Bin?", "space.recycle.msg": "{0} ({1}) will be moved to the Recycle Bin. You can restore it anytime.",
     "toast.whitelisted": "Added to whitelist — scans and cleanups will skip this file",
     "toast.largecleaned": "Cleaned large file {0}", "toast.recycled": "Moved to Recycle Bin — {0} freed",
@@ -130,10 +128,10 @@ EN = {
     "tool.purge.msg": "{0} quarantined items will be permanently deleted. This cannot be undone.",
     "tool.shred.title": "File shredder", "tool.shred.desc": "Permanently deletes files from the file system without the Recycle Bin. Note: on SSDs immediate physical overwriting cannot be guaranteed. Irreversible — choose files carefully.",
     "tool.shred.confirm.title": "Shred this item?", "tool.shred.confirm.msg": "{0}\n\n{1} will be overwritten and permanently deleted — it bypasses the Recycle Bin and cannot be recovered by software.\n\nThis cannot be undone!",
-    "tool.shred.log": "Shredded {0} “{1}”", "tool.folder": "folder", "tool.file": "file",
+
     "tool.dup.title": "Duplicate files", "tool.dup.desc": "Duplicates are confirmed by content hashing (never by file name). Default scope: Pictures, Videos and Downloads.",
     "tool.dup.none": "No duplicate files found", "tool.dup.summary": "{0} duplicate groups, {1} recoverable",
-    "tool.dup.progress": "{0:N0} files scanned…", "tool.dup.more": "… {0} more groups not shown",
+    "tool.dup.progress": "{0:N0} files scanned…",
     "tool.dup.group": "{0} identical files · {1} each · {2} recoverable", "tool.dup.tip": "Checked = delete this copy",
     "tool.dup.clean.title": "Delete selected copies?", "tool.dup.clean.msg": "{0} files, {1}, will be moved to the Recycle Bin (restorable).",
     "tool.history.title": "Clean history", "tool.win.title": "Windows quick tools", "tool.win.desc": "Direct shortcuts to built-in system tools — safe and reliable",
@@ -171,16 +169,15 @@ EN = {
     "settings.row.autoclean": "Automatic cleaning", "settings.row.autoclean.d": "Cleans safe items such as temp files and caches on schedule",
     "settings.row.autoclean.freq": "Auto-clean frequency", "settings.row.autoclean.freq.d": "Runs in the background while the app is running",
     "settings.row.notifydisk": "Low disk space alert", "settings.row.notifydisk.d": "Alerts when the system drive drops below 10% (rare, non-intrusive)",
-    "settings.row.notifyauto": "Auto-clean results", "settings.row.notifyweekly": "Weekly space report",
-    "settings.row.notifynews": "Product news", "settings.row.notifynews.d": "Feature and event announcements, off by default",
+
     "settings.row.threads": "Scan threads", "settings.row.threads.d": "More threads = faster; use fewer on HDDs",
-    "settings.row.hidden": "Scan hidden files", "settings.row.junction": "Follow directory links (Junctions)",
-    "settings.row.junction.d": "Following links may double-count data; off by default",
+
+
     "settings.row.stats": "Anonymous usage stats", "settings.row.stats.d": "Would only report feature counts and error codes — this build never uploads anything",
     "settings.row.crash": "Crash reports",
     "settings.privacy.desc": "All scan data stays on this device. This app never collects or uploads file names, paths or contents.",
     "settings.about.slogan": "Clean with clarity, optimize with confidence.", "settings.about.support": "Support & feedback",
-    "settings.about.site": "Website", "settings.about.email": "Email", "settings.about.repo": "Source code",
+    "settings.about.site": "Website", "settings.about.email": "Email",
     "settings.about.wechat": "Scan or search “馋熊冰” in WeChat for tips and updates.",
     # Wizard
     "wizard.welcome": "Welcome to CleanOptimize",
@@ -196,10 +193,10 @@ EN = {
     "dlg.exit.title": "Exit CleanOptimize?", "dlg.exit.msg": "Auto-cleaning and disk space monitoring stop when you exit.",
     "toast.traymin": "Minimized to tray — right-click the tray icon to exit",
     "toast.scanstopped": "Scan stopped", "toast.scanfailed": "Scan failed: ", "toast.noselect": "Select items to clean first",
-    "toast.cleancancelled": "Cleaning cancelled", "toast.cleanfailed": "Cleaning failed: ", "toast.nothing": "Nothing found to clean",
-    "toast.cleaned": "Cleaned — {0} freed", "toast.readfailed": "Failed to load: ", "toast.langapplied": "Language changed",
+    "toast.cleancancelled": "Cleaning cancelled", "toast.cleanfailed": "Cleaning failed: ",
+     "toast.readfailed": "Failed to load: ", "toast.langapplied": "Language changed",
     # v1.2 additions
-    "home.disk.center": "used", "home.mon.title": "Live system status", "home.mon.live": "live",
+     "home.mon.title": "Live system status", "home.mon.live": "live",
     "home.mon.cpu": "CPU", "home.mon.cores": "{0} cores", "home.mon.ram": "Memory",
     "home.mon.ram.f": "{0} / {1}", "home.mon.uptime": "Uptime",
     "home.mon.uptime.d": "{0} d {1} h", "home.mon.uptime.h": "{0} h {1} m", "home.mon.uptime.m": "{0} min",
@@ -209,7 +206,7 @@ EN = {
     "tool.quar.meta": "{0} · quarantined {1}",
     "tool.shred.pickfile": "Choose a file to shred", "tool.shred.pickdir": "Choose a folder to shred",
     "tool.dup.nodirs": "No folders to scan", "tool.dup.nosel": "Select the copies to delete first",
-    "tool.dup.cleaned": "Deleted {0} duplicate files",
+
     "tool.win.openfail": "Cannot open: ",
     "tool.win.dns": "Flush DNS cache", "tool.win.dns.d": "Fix pages not loading or slow lookups",
     "tool.win.dns.ok": "DNS cache flushed", "tool.win.dns.fail": "Flush failed: ",
@@ -224,19 +221,16 @@ EN = {
     "tool.empty.nosel": "Select empty folders to delete first",
     "tool.empty.clean.title": "Delete the selected empty folders?",
     "tool.empty.clean.msg": "{0} empty folders will be moved to the Recycle Bin (restorable).",
-    "tool.empty.cleaned": "Deleted {0} empty folders",
+
     "space.large.summary": "{0} files · {1} total", "space.addwhitelist": "Whitelist",
-    "space.nosubdir": "(no subfolders)", "space.nfiles": "{0} files",
-    "settings.update.check": "Check for updates", "update.checking": "Checking for updates…",
-    "update.found": "New version v{0} available", "update.latest": "You are up to date", "update.failed": "Update check failed",
+    "space.nosubdir": "(no subfolders)", "settings.update.check": "Check for updates", "update.checking": "Checking for updates…",
+     "update.latest": "You are up to date", "update.failed": "Update check failed",
     "update.available": "New version v{0} available — see Settings · About",
-    "update.dlg.title": "Update to v{0}?",
-    "update.dlg.msg": "Current version {0}, latest {1}.\nOpen the download page?",
-    "update.dlg.open": "Open download page",
+
     # v1.3 additions
     "score.excellent": "Excellent", "score.good": "Good", "score.fair": "Cleanup advised", "score.poor": "Clean up now",
-    "home.health.title": "Health score", "home.health.tip": "Click to optimize now", "home.health.unit": "pts",
-    "home.health.junk": "{0} of junk", "home.health.high": "{0} high-impact startups", "home.health.free": "{0:F0}% disk free",
+      "home.health.unit": "pts",
+
     "home.stats.days7": "Freed · last 7 days", "home.stats.total": "{0} freed in total · {1} cleanups",
     "cmd.placeholder": "Search actions — “scan”, “DNS”, “theme”…",
     "cmd.hint": "↑ ↓ select · Enter run · Esc close · Ctrl+K toggle",
@@ -280,13 +274,13 @@ EN = {
     # v2.0
     "startup.note.core": "Core Windows component — do not disable",
     "startup.uac.required": "Administrator permission required (allow the UAC prompt and retry)",
-    "quar.err.notfound": "File not found", "quar.err.locked": "File is in use",
+
     "quar.err.norecord": "Record not found", "quar.err.missing": "Quarantined file is missing",
     "deliveryopt.note": "Cleaned via the official Windows mechanism",
     "deliveryopt.uac": "Administrator permission required — allow the UAC prompt",
     "recycle.count": "{0} items", "recycle.err.empty": "Failed to empty the Recycle Bin",
     # v2.1
-    "clean.skip.subitems": "{0} sub-items skipped", "quar.err.move": "Cannot move to quarantine",
+    "clean.skip.subitems": "{0} sub-items skipped",
     "del.err.denied": "Access denied", "del.err.locked": "File is in use", "del.err.link": "Cannot delete link",
     "priv.records": " ({0} entries)", "priv.norecords": " (no entries)",
     "priv.clipboard.locked": "Clipboard is held by another program",
@@ -301,9 +295,9 @@ EN = {
     "settings.custom.empty": "No custom clean folders yet", "settings.custom.protected": "That folder is protected user data and cannot be added",
     "startup.boottime": "Last boot {0:F1}s", "space.filter.all": "All",
     # v2.3
-    "hc.start": "Start full check-up", "hc.never": "No check-up yet — click to begin",
-    "hc.last": "Last score {0} · {1}",
-    "hc.summary.title": "Check-up summary", "hc.summary.score": "Score {0} · {1}",
+    "hc.start": "Start full check-up",
+
+    "hc.summary.title": "Check-up summary",
     "hc.factor.disk": "Disk free", "hc.factor.junk": "Junk load", "hc.factor.startup": "Startup load",
     "hc.todo.startup": "{0} high-impact startup items may slow booting", "hc.todo.maint": "{0} maintenance features are off",
     "hc.done.score": "Estimated score {0} → {1} (effective after rescan)",

@@ -59,7 +59,6 @@ public sealed class LargeFileInfo
     public string Path { get; set; } = "";
     public long Size { get; set; }
     public DateTime ModifiedTime { get; set; }
-    public bool Whitelisted { get; set; }
 }
 
 public sealed class DriveAnalysis
@@ -401,21 +400,6 @@ public sealed class SpaceAnalysisService
             name.StartsWith("Windows", StringComparison.OrdinalIgnoreCase))
             return FileCategory.System;
         return FileCategory.Other;
-    }
-
-    /// <summary>文件级类型统计（对大文件列表聚合，轻量快速）。</summary>
-    public static List<CategoryStat> SummarizeByExtension(IEnumerable<LargeFileInfo> files)
-    {
-        var map = new Dictionary<FileCategory, CategoryStat>();
-        foreach (var f in files)
-        {
-            var cat = ClassifyFile(f.Path);
-            if (!map.TryGetValue(cat, out var st))
-                map[cat] = st = new CategoryStat { Category = cat };
-            st.Bytes += f.Size;
-            st.Files++;
-        }
-        return map.Values.OrderByDescending(s => s.Bytes).ToList();
     }
 
     public static FileCategory ClassifyFile(string path)

@@ -22,6 +22,9 @@ public partial class SmartScanPage : Page, IParamPage
     private List<ScanRowVM>? _rows;
     private bool _scanning;
     private bool _cleaning;
+    private bool _confirming;
+    private QuickCleanRequest? _quickRequest;
+    internal bool OperationActive => _scanning || _cleaning || _confirming;
 
     public SmartScanPage(MainWindow main)
     {
@@ -37,62 +40,10 @@ public partial class SmartScanPage : Page, IParamPage
 
     public void OnNavigated(object? param)
     {
+        if (param is QuickCleanRequest request) { StartScan(request); return; }
         if (param as string == "start" && !_scanning && !_cleaning)
             StartScanFromUi();
 
-    }
-
-    // ————— 体检预告(待机页,缓存数据) —————
-
-    private async Task BuildHealthPreviewAsync()
-    {
-        try
-        {
-            var last = ScanCache.Load();
-            if (last == null)
-            {
-                RenderHealthPreview(null);
-                return;
-            }
-            double freePct = 100;
-            try
-            {
-                var drive = DriveInfo.GetDrives().First(d => d.IsReady &&
-                    d.Name.StartsWith(System.IO.Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
-                freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
-            }
-            catch { }
-            int highImpact = 0;
-            try
-            {
-                var items = await Task.Run(() => Services.EnumerationCache.GetStartup());
-                highImpact = items.Count(i => i.Enabled && i.Impact == "高");
-            }
-            catch { }
-            RenderHealthPreview(Core.Analysis.HealthScoreService.Compute(last.TotalBytes, highImpact, freePct));
-        }
-        catch { }
-    }
-
-    private void RenderHealthPreview(Core.Analysis.HealthScoreService.Report? r)
-    {
-        HealthPreviewHost.Children.Clear();
-        var chip = new Border
-        {
-            Background = (Brush)FindResource("PrimarySoftBrush"),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(11, 4, 11, 5),
-        };
-        chip.Child = new TextBlock
-        {
-            Text = r == null
-                ? Services.Loc.T("hc.never")
-                : string.Format(Services.Loc.T("hc.last"), r.Score, Services.Loc.T(r.LevelKey)),
-            FontSize = 12,
-            FontWeight = FontWeights.Bold,
-            Foreground = (Brush)FindResource("PrimaryBrush"),
-        };
-        HealthPreviewHost.Children.Add(chip);
     }
 
     public void StartScanFromUi() => StartScan();
@@ -106,9 +57,14 @@ public partial class SmartScanPage : Page, IParamPage
 
     // ————— 扫描 —————
 
-    private async void StartScan()
+    private async void StartScan(QuickCleanRequest? request = null) => await ScanAsync(request);
+
+    internal async Task ScanAsync(QuickCleanRequest? request = null, ScannerService? scanner = null, Func<string, bool>? confirm = null)
     {
-        if (_scanning || _cleaning) return;
+        if (OperationActive) return;
+        if (request != null && (_main.HasActiveOperations || _main.UpdateInProgress)) return;
+        _quickRequest = request;
+        HealthExpander.Visibility = request == null ? Visibility.Visible : Visibility.Collapsed;
         _scanning = true;
         _scanCts = new CancellationTokenSource();
         Show(PanelScanning);
@@ -118,7 +74,7 @@ public partial class SmartScanPage : Page, IParamPage
         ScanPercentText.Text = "0%";
         ScanFoundText.Text = Services.Loc.T("scan.found");
 
-        var scanner = new ScannerService();
+        scanner ??= new ScannerService();
         var ctx = scanner.BuildContext(_scanCts.Token, detail =>
         {
             Dispatcher.Invoke(() => ScanDetailText.Text = detail);
@@ -142,7 +98,7 @@ public partial class SmartScanPage : Page, IParamPage
         List<IScanRule> scannedRules;
         try
         {
-            scannedRules = scanner.Rules.Where(r =>
+            scannedRules = request != null ? QuickCleanPlan.SelectRules(scanner.Rules, request) : scanner.Rules.Where(r =>
                 r.Group is RuleGroup.SystemJunk or RuleGroup.BrowserCache or RuleGroup.AppCache
                 or RuleGroup.RecycleBin).ToList();
             results = await scanner.ScanAsync(scannedRules, ctx, progress);
@@ -161,20 +117,27 @@ public partial class SmartScanPage : Page, IParamPage
             _main.ShowToast(Services.Loc.T("toast.scanfailed") + ex.Message, ToastType.Warning);
             return;
         }
+        finally { _scanCts.Dispose(); _scanCts = null; }
         _scanning = false;
 
-        BuildResultView(scannedRules, results);
+        if (!_main.CanInteract) return;
+        BuildResultView(scannedRules, results, cacheResults: request == null);
         Show(PanelResults);
+        if (request != null)
+        {
+            if (_rows?.Any(r => r.Selected) == true) await CleanSelectedAsync(confirm);
+            else _main.ShowToast(Loc.T("ui.quick.empty"), ToastType.Info);
+        }
     }
 
-    internal void BuildResultView(List<IScanRule> rules, List<RuleResult> results, bool refreshHealth = true)
+    internal void BuildResultView(List<IScanRule> rules, List<RuleResult> results, bool refreshHealth = true, bool cacheResults = true)
     {
         ResultGroups.Children.Clear();
         _rows = new List<ScanRowVM>();
         var pairs = rules.Zip(results, (rule, res) => (rule, res)).Where(p => p.res.Error == null && p.res.TotalSize > 0).ToList();
 
         // 缓存摘要供首页使用
-        ScanCache.Save(new LastScanSummary
+        if (cacheResults) ScanCache.Save(new LastScanSummary
         {
             Time = DateTime.Now,
             TotalBytes = results.Sum(r => r.TotalSize),
@@ -630,10 +593,13 @@ public partial class SmartScanPage : Page, IParamPage
 
     // ————— 清理 —————
 
-    private async void BtnCleanSelected_Click(object sender, RoutedEventArgs e)
+    private async void BtnCleanSelected_Click(object sender, RoutedEventArgs e) => await CleanSelectedAsync();
+
+    internal async Task CleanSelectedAsync(Func<string, bool>? confirm = null)
     {
-        if (_rows == null || _cleaning || _scanning) return;
-        var selected = _rows.Where(r => r.Selected).ToList();
+        if (_rows == null || OperationActive) return;
+        if (_main.UpdateInProgress || AutoCleanScheduler.Instance.IsRunning) return;
+        var selected = _rows.Where(r => r.Selected && (_quickRequest == null || QuickCleanPlan.IsEligible(r.Rule))).ToList();
         if (selected.Count == 0)
         {
             _main.ShowToast(Services.Loc.T("toast.noselect"), ToastType.Info);
@@ -649,7 +615,17 @@ public partial class SmartScanPage : Page, IParamPage
                           string.Join("\n", confirmRules.Select(r => "· " + Services.Loc.RuleName(r.Res.RuleId, r.Name) + "（" + r.SizeText + "）"));
         }
         confirmMsg += "\n\n" + Services.Loc.T("dlg.clean.quarantinehint");
-        if (!DialogService.Confirm(_main, Services.Loc.T("dlg.clean.selected.title"), confirmMsg, Services.Loc.T("btn.clean.start"), Services.Loc.T("btn.cancel")))
+        if (_quickRequest != null)
+            confirmMsg = Loc.T("ui.quick.description") + "\n\n" + string.Join("\n", selected.Select(r => "· " + r.Name + " (" + r.SizeText + ")")) + "\n\n" + confirmMsg;
+        bool accepted;
+        _confirming = true;
+        try
+        {
+            accepted = confirm?.Invoke(confirmMsg) ?? DialogService.Confirm(_main,
+                Loc.T(_quickRequest == null ? "dlg.clean.selected.title" : "ui.quick.title"), confirmMsg, Services.Loc.T("btn.clean.start"), Services.Loc.T("btn.cancel"));
+        }
+        finally { _confirming = false; }
+        if (!accepted || !_main.CanInteract || _main.UpdateInProgress || AutoCleanScheduler.Instance.IsRunning)
             return;
 
         _cleaning = true;
@@ -664,18 +640,10 @@ public partial class SmartScanPage : Page, IParamPage
         {
             Rule = r.Rule,
             Result = r.Res,
-            Selected = r.Res.Items.ToList(),
+            Selected = r.Res.Items,
         }).ToList();
 
-        int total = requests.Sum(q => q.Selected.Count);
-        int done = 0;
-        var progress = new Progress<CleanProgress>(p =>
-        {
-            done++;
-            CleanProgressBar.Value = total > 0 ? done * 100.0 / total : 100;
-            CleanDetailText.Text = p.CurrentPath;
-            CleanFreedText.Text = string.Format(Services.Loc.T("clean.freed.f"), SizeText.OfBytes(p.FreedBytes));
-        });
+        var progress = new Progress<CleanProgress>(ApplyCleanProgress);
 
         CleanSummary summary;
         try
@@ -696,20 +664,14 @@ public partial class SmartScanPage : Page, IParamPage
             _main.ShowToast(Services.Loc.T("toast.cleanfailed") + ex.Message, ToastType.Warning);
             return;
         }
+        finally { _cleanCts.Dispose(); _cleanCts = null; }
         _cleaning = false;
 
-        DoneTitleText.Text = summary.Cancelled ? Services.Loc.T("done.cancelled") : summary.FailCount == 0 && summary.SkipCount == 0 ? Services.Loc.T("done.title") : Services.Loc.T("done.partial");
-        DoneFreedText.Text = string.Format(Services.Loc.T("done.freed.total"), SizeText.OfBytes(summary.FreedBytes));
-        DoneOkText.Text = summary.SuccessCount.ToString();
-        DoneQuarText.Text = summary.QuarantineCount.ToString();
-        DoneSkipText.Text = summary.SkipCount.ToString();
-        DoneFailText.Text = summary.FailCount.ToString();
-        DoneNoteText.Text = summary.QuarantineCount > 0
-            ? string.Format(Services.Loc.T("done.note.quarantine"), SettingsService.Current.QuarantineDays)
-            : Services.Loc.T("done.note.skip");
+        if (!_main.CanInteract) return;
+        ApplyCleanOutcome(summary);
 
-        // 评分对比:按已释放量重算(预计值,诚实标注)
-        if (_lastReport != null && summary.FreedBytes > 0)
+        // Source junk removed includes quarantine; disk availability is queried separately.
+        if (_lastReport != null && summary.RemovedBytes > 0)
         {
             try
             {
@@ -718,7 +680,7 @@ public partial class SmartScanPage : Page, IParamPage
                     d.Name.StartsWith(System.IO.Path.GetTempPath().Substring(0, 3), StringComparison.OrdinalIgnoreCase));
                 freePct = drive.AvailableFreeSpace * 100.0 / drive.TotalSize;
                 var after = Core.Analysis.HealthScoreService.Compute(
-                    Math.Max(0, _lastReport.JunkBytes - summary.FreedBytes),
+                    Math.Max(0, _lastReport.JunkBytes - summary.RemovedBytes),
                     _lastReport.HighImpactStartup, freePct);
                 if (after.Score > _lastReport.Score)
                 {
@@ -731,6 +693,15 @@ public partial class SmartScanPage : Page, IParamPage
             catch { }
         }
         Show(PanelDone);
+
+        if (_quickRequest != null)
+        {
+            // Partial scans must not replace a full scan summary or trigger another full scan.
+            ScanCache.Invalidate();
+            _rows = null;
+            ResultGroups.Children.Clear();
+            return;
+        }
 
         // 后台重扫以刷新缓存
         _ = Task.Run(async () =>
@@ -775,6 +746,27 @@ public partial class SmartScanPage : Page, IParamPage
             r.CheckBox!.IsChecked = newVal;
         }
         UpdateSelectionSummary();
+    }
+
+    internal void ApplyCleanProgress(CleanProgress progress)
+    {
+        CleanProgressBar.Value = progress.Total > 0 ? Math.Clamp(progress.Processed * 100.0 / progress.Total, 0, 100) : 100;
+        CleanDetailText.Text = progress.CurrentPath;
+        CleanFreedText.Text = string.Format(Services.Loc.T("clean.freed.f"), SizeText.OfBytes(progress.FreedBytes));
+    }
+
+    internal void ApplyCleanOutcome(CleanSummary summary)
+    {
+        DoneTitleText.Text = summary.Cancelled ? Services.Loc.T("done.cancelled") : summary.FailCount == 0 && summary.SkipCount == 0 ? Services.Loc.T("done.title") : Services.Loc.T("done.partial");
+        DoneFreedText.Text = string.Format(Services.Loc.T("done.freed.total"), SizeText.OfBytes(summary.FreedBytes));
+        DoneOkText.Text = summary.SuccessCount.ToString();
+        DoneQuarText.Text = summary.QuarantineCount.ToString();
+        DoneSkipText.Text = summary.SkipCount.ToString();
+        DoneFailText.Text = summary.FailCount.ToString();
+        DoneNoteText.Text = summary.QuarantineCount > 0
+            ? string.Format(Services.Loc.T("ui.clean.quarantined"), SizeText.OfBytes(summary.QuarantinedBytes)) + "\n" +
+              string.Format(Services.Loc.T("done.note.quarantine"), SettingsService.Current.QuarantineDays)
+            : Services.Loc.T("done.note.skip");
     }
 
     private void Show(UIElement panel)

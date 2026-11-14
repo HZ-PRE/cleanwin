@@ -12,11 +12,17 @@ public partial class App : Application
     private static Mutex? _singleInstanceMutex;
     private static bool _ownsMutex;
     private NotifyIconService? _tray;
+    private UninstallLifetime? _uninstallLifetime;
 
     public static new App Current => (App)Application.Current;
 
     protected void OnStartup(object sender, StartupEventArgs e)
     {
+        if (e.Args.Contains("--shutdown-for-uninstall"))
+        {
+            Shutdown(UninstallLifetime.RequestExit());
+            return;
+        }
         // —— 提权辅助实例：执行管理任务后立即退出，不进入 UI ——
         if (e.Args.Length >= 1 && e.Args[0] == "--elevated")
         {
@@ -29,7 +35,7 @@ public partial class App : Application
         }
 
         // —— 命令行安全自测 ——
-        if (e.Args.Any(a => a is "--selftest" or "--ui-selftest" or "--window-lifetime-selftest"))
+        if (e.Args.Any(a => a is "--selftest" or "--ui-selftest" or "--window-lifetime-selftest" or "--uninstall-lifetime-selftest"))
         {
             StreamWriter? testLog = null;
             var logIndex = Array.IndexOf(e.Args, "--selftest-log");
@@ -40,6 +46,13 @@ public partial class App : Application
                 testLog = new StreamWriter(logPath, false, System.Text.Encoding.UTF8) { AutoFlush = true };
                 Console.SetOut(testLog);
                 Console.SetError(testLog);
+            }
+            if (e.Args.Contains("--uninstall-lifetime-selftest"))
+            {
+                var isolatedDir = SelfTest.CreateIsolatedEnvironment();
+                Exit += (_, _) => { Core.Utils.FileUtil.DeleteDirectoryTree(isolatedDir); testLog?.Dispose(); };
+                WindowLifetimeTests.RunUninstallChild(e.Args);
+                return;
             }
             if (e.Args.Contains("--window-lifetime-selftest"))
             {
@@ -133,6 +146,7 @@ public partial class App : Application
 
         // 自动清理调度
         AutoCleanScheduler.Instance.Initialize(win);
+        _ = win.CheckForUpdatesAsync();
 
     }
 
@@ -141,11 +155,14 @@ public partial class App : Application
         MainWindow = window;
         // Hiding to tray keeps the window alive; a real close must terminate the process.
         ShutdownMode = ShutdownMode.OnMainWindowClose;
+        _uninstallLifetime?.Dispose();
+        _uninstallLifetime = new UninstallLifetime(window.ForceClose);
     }
 
     protected void OnExit(object sender, ExitEventArgs e)
     {
         _tray?.Dispose();
+        _uninstallLifetime?.Dispose();
         AutoCleanScheduler.Instance.Stop();
         // 设置仅在用户修改时落盘，避免旧快照覆盖新配置
         if (_ownsMutex) _singleInstanceMutex?.ReleaseMutex();

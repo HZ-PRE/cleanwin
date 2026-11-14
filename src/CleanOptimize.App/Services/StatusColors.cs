@@ -23,11 +23,4 @@ public static class StatusColors
     public static Brush BrushFor(FrameworkElement el, double v) =>
         (Brush)el.FindResource(BrushKeyFor(v));
 
-    /// <summary>软底色资源 key(徽章/圆底用)。</summary>
-    public static string SoftKeyFor(double v) => v switch
-    {
-        >= GoodThreshold => "SuccessSoftBrush",
-        >= WarnThreshold => "WarningSoftBrush",
-        _ => "DangerSoftBrush",
-    };
 }

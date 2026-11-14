@@ -129,6 +129,7 @@ public partial class AppsPage : Page, IParamPage
         finally { _uninstalling = false; AppUninstall.IsEnabled = AppList.SelectedItem is InstalledApp; }
     }
     private bool _uninstalling;
+    internal bool OperationActive => _uninstalling;
 
     private async Task UninstallAsync(InstalledApp app)
     {

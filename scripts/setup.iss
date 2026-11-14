@@ -89,3 +89,32 @@ Filename: "{app}\{#MyAppExeName}"; Description: "立即运行 {#MyAppName}"; Fla
 [UninstallRun]
 ; 卸载刻意保留用户数据（隔离区/历史在 %LOCALAPPDATA%\CleanOptimize），
 ; 隔离区文件卸载后仍可重装恢复 —— 这是安全设计。
+
+[CustomMessages]
+chinese.CloseRunningFailed=无法结束正在运行的清理优化大师。请退出程序后重新卸载；如果程序以管理员身份运行，请使用相同权限卸载。
+english.CloseRunningFailed=Could not stop the running CleanOptimize application. Exit it and retry uninstalling. If the application is elevated, run the uninstaller with the same privileges.
+
+[Code]
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ExitCode: Integer;
+  AppExe: String;
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    AppExe := ExpandConstant('{app}\{#MyAppExeName}');
+    if FileExists(AppExe) then
+    begin
+      Log('Requesting shutdown of the exact installed executable: ' + AppExe);
+      if not Exec(AppExe, '--shutdown-for-uninstall', ExpandConstant('{app}'),
+        SW_HIDE, ewWaitUntilTerminated, ExitCode) then
+        RaiseException(CustomMessage('CloseRunningFailed'));
+      if ExitCode <> 0 then
+      begin
+        Log('Shutdown helper failed: ' + IntToStr(ExitCode));
+        RaiseException(CustomMessage('CloseRunningFailed'));
+      end;
+      Log('Installed application exited; proceeding with uninstall.');
+    end;
+  end;
+end;

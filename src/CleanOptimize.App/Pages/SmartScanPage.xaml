@@ -6,7 +6,6 @@
         <TextBlock Text="{DynamicResource ui.scan.ready}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
         <!-- 体检预告条 -->
         <Border Background="{DynamicResource CardBgBrush}" CornerRadius="14" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" Padding="16,11" Margin="0,0,0,22" HorizontalAlignment="Center" Visibility="Collapsed">
-          <StackPanel x:Name="HealthPreviewHost" Orientation="Horizontal"/>
         </Border>
         <Button x:Name="BigScanBtn" Click="BtnStartScan_Click" HorizontalAlignment="Center" Style="{StaticResource PrimaryButton}" Content="{DynamicResource hc.start}"/>
         <TextBlock Text="{DynamicResource scan.cover}" FontSize="13.5" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,30,0,0"/>

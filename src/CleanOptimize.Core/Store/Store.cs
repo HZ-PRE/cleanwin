@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using CleanOptimize.Core.Models;
 
 namespace CleanOptimize.Core.Store;
@@ -22,24 +21,17 @@ public sealed class AppSettings
     public bool AutoCleanEnabled { get; set; }
     /// <summary>daily / weekly / monthly</summary>
     public string AutoCleanFrequency { get; set; } = "weekly";
-    public bool AutoCleanIncludeBrowser { get; set; } = true;
     public int SkipRecentMinutes { get; set; } = 10;
 
     // —— 通知 ——
     public bool NotifyDiskLow { get; set; } = true;
     public bool NotifyAutoCleanResult { get; set; } = true;
-    public bool NotifyWeeklyReport { get; set; }
-    public bool NotifyProductNews { get; set; }
 
     // —— 高级 ——
     public int ScanThreads { get; set; } = Math.Max(2, Environment.ProcessorCount / 2);
-    public bool ScanHiddenFiles { get; set; } = true;
-    public bool FollowJunctions { get; set; }
-    public bool ShowSystemFiles { get; set; }
-    public string LogLevel { get; set; } = "info";
 
     // —— 隐私 ——
-    // 保留 JSON 字段兼容旧配置，离线版本不允许启用上报。
+    // 保留 JSON 字段兼容旧配置，当前版本不允许启用上报。
     public bool AnonymousStats { get => false; set { } }
     public bool CrashReports { get => false; set { } }
 
@@ -57,8 +49,6 @@ public sealed class AppSettings
     public List<string> EmptyFolderScanDirs { get; set; } = new();
     public List<string> CustomCleanDirs { get; set; } = new();
 
-    [JsonIgnore]
-    public static AppSettings Default { get; } = new();
 }
 
 public sealed class SettingsService
@@ -70,12 +60,12 @@ public sealed class SettingsService
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CleanOptimize");
 
     // Self-tests must never write to the user's real settings, history or quarantine.
-    internal static void InitializeSelfTest(string dataDir)
+    internal static void InitializeSelfTest(string dataDir, AppSettings? settings = null)
     {
         lock (Lock)
         {
             DataDir = Path.GetFullPath(dataDir);
-            _current = new AppSettings();
+            _current = settings ?? new AppSettings();
             Directory.CreateDirectory(DataDir);
         }
     }

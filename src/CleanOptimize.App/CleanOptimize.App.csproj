@@ -11,7 +11,7 @@
     <AssemblyName>CleanOptimize</AssemblyName>
     <RootNamespace>CleanOptimize.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>3.0.7</Version>
+    <Version>0.0.1</Version>
     <Product>清理优化大师</Product>
     <Company>CleanOptimize</Company>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
@@ -26,7 +26,8 @@
 
   <ItemGroup>
     <Resource Include="Assets\app.ico" />
-    <Resource Include="Assets\wechat-search.png" />
+    <Resource Include="Assets\wechat-search.jpg" />
+    <Resource Include="Assets\wx_pay.png" />
     <Resource Include="Assets\wizard-hero.png" />
     <Resource Include="Assets\logo.png" />
   </ItemGroup>

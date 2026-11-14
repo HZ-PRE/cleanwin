@@ -11,10 +11,11 @@ public partial class CleanSpacePage : Page, IParamPage
 {
     private readonly MainWindow _main;
     private readonly ScannerService _scanner = new();
-    private readonly CleanService _cleaner = new();
     private int _tab;
     internal int SelectedTab => _tab;
     private CancellationTokenSource? _scanCts;
+    private bool _mutating;
+    internal bool OperationActive => _scanCts != null || _mutating;
 
     /// <summary>tab -> 已扫描的行。</summary>
     private readonly Dictionary<int, List<ScanRowVM>> _tabRows = new();
@@ -197,6 +198,7 @@ public partial class CleanSpacePage : Page, IParamPage
             return;
 
         BtnCleanSel.IsEnabled = false;
+        _mutating = true;
         try
         {
             var svc = new CleanService();
@@ -204,10 +206,11 @@ public partial class CleanSpacePage : Page, IParamPage
             {
                 Rule = r.Rule,
                 Result = r.Res,
-                Selected = r.Res.Items.ToList(),
+                Selected = r.Res.Items,
             }).ToList();
             var summary = await svc.CleanAsync(requests, CancellationToken.None, null);
             _main.ShowToast(string.Format(Services.Loc.T("toast.cleandone"), SizeText.OfBytes(summary.FreedBytes)) +
+                            (summary.QuarantineCount > 0 ? "\n" + string.Format(Services.Loc.T("ui.clean.quarantined"), SizeText.OfBytes(summary.QuarantinedBytes)) : "") +
                             (summary.SkipCount > 0 ? string.Format(Services.Loc.T("toast.skipped"), summary.SkipCount) : ""),
                             summary.FailCount > 0 ? ToastType.Warning : ToastType.Success);
             _tabRows.Remove(_tab);
@@ -221,6 +224,7 @@ public partial class CleanSpacePage : Page, IParamPage
         finally
         {
             BtnCleanSel.IsEnabled = true;
+            _mutating = false;
         }
     }
 
@@ -242,10 +246,15 @@ public partial class CleanSpacePage : Page, IParamPage
             string.Format(Services.Loc.T("recycle.confirm.msg"), count, SizeText.OfBytes(size)), Services.Loc.T("btn.deleteperm"), Services.Loc.T("btn.cancel"), danger: true))
             return;
         BtnEmptyBin.IsEnabled = false;
+        _mutating = true;
+        try
+        {
         var ok = await Task.Run(() => Core.Utils.ShellUtil.EmptyRecycleBin());
         Core.Store.HistoryService.Add("Clean", string.Format(Services.Loc.T("clean.recyclebin.cleared"), count), "", size);
         _main.ShowToast(ok ? Services.Loc.T("toast.binemptied") : Services.Loc.T("toast.failed"), ok ? ToastType.Success : ToastType.Warning);
         await RefreshRecycleAsync();
+        }
+        finally { _mutating = false; }
     }
 
     private void BtnOpenBin_Click(object sender, RoutedEventArgs e)

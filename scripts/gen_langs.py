@@ -10,12 +10,12 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "src", "CleanOptimize.App", 
 # ============ zh-CN 主字典 ============
 ZH = {
     # 通用
-    "common.selected": "已选择", "common.freeable": "可释放", "common.viewall": "查看全部",
+    "common.selected": "已选择",  "common.viewall": "查看全部",
     "common.loading": "正在读取…", "common.scanning": "正在扫描…", "common.n.items": "{0} 项",
     "common.approx": "约 ", "btn.cancel": "取消", "btn.exit": "退出", "btn.refresh": "刷新",
     "btn.stopscan": "停止扫描", "btn.rescan": "重新扫描", "btn.restore": "恢复", "btn.deleteperm": "永久删除",
     "btn.uninstall": "卸载", "btn.recycle": "移入回收站", "btn.remove": "移除", "btn.analyze.start": "开始分析",
-    "btn.scan.now": "立即扫描", "btn.more": "更多功能", "btn.clean.selected": "清理已选项目",
+    "btn.scan.now": "立即扫描",  "btn.clean.selected": "清理已选项目",
     "btn.clean.start": "开始清理", "btn.done.home": "返回首页", "btn.done.quarantine": "打开隔离区",
     "btn.emptybin": "清空回收站", "btn.openbin": "打开回收站", "btn.scangroup": "扫描本组",
     "btn.cleansel": "清理所选项", "btn.dupscan": "开始扫描", "btn.dup.rescan": "重新扫描",
@@ -32,27 +32,25 @@ ZH = {
     # 时间
     "time.now": "刚刚", "time.minago": "{0} 分钟前", "time.today": "今天 {0}", "time.yesterday": "昨天 {0}",
     # 首页
-    "home.slogan": "保持定期扫描，让电脑始终保持最佳状态",
-    "home.status.good": "设备状态良好", "home.status.suggest": "建议清理一下", "home.status.tight": "磁盘空间紧张",
-    "home.status.suggest.detail": "发现 {0} 可清理垃圾与 {1} 个高影响启动项",
+
+      "home.status.tight": "磁盘空间紧张",
+
     "home.status.tight.detail": "系统盘剩余空间不足 10%，建议立即清理",
     "home.status.lastscan": "上次扫描：{0}", "home.noscan": "还没有扫描过", "home.noscan.detail": "还没有扫描过，点击「立即扫描」开始",
-    "home.card.junk": "可清理垃圾", "home.card.junk.note": "点击扫描查看可释放空间", "home.card.junk.lastscan": "上次扫描 {0}",
+    "home.card.junk": "可清理垃圾",
     "home.card.startup": "启动项", "home.card.startup.note": "个启动项随开机运行", "home.card.startup.note.high": "高影响启动项，可能拖慢开机",
     "home.card.large": "大文件", "home.card.large.note": "点击分析查找", "home.card.large.analyzed": "已分析",
-    "home.card.large.analyzed.note": "点击查看大文件详情", "home.card.large.pending": "待分析",
+     "home.card.large.pending": "待分析",
     "home.card.apps": "已装应用", "home.card.apps.note": "点击管理已装应用",
-    "home.disk.title": "磁盘空间 (C:)", "home.disk.title.disk": "磁盘空间 ({0})", "home.disk.total": "总容量 —",
-    "home.disk.used": "已使用 —", "home.disk.free": "可用 —", "home.disk.total.f": "总容量 {0}",
-    "home.disk.used.f": "已使用 {0} ({1:F1}%)", "home.disk.free.f": "可用 {0} ({1:F1}%)", "home.disk.more": "查看空间去哪了 →",
+
     "home.space.title": "空间分析", "home.space.empty": "还没有分析过这块磁盘",
     "home.activity.title": "最近活动", "home.activity.empty": "还没有活动记录，扫描清理一下试试",
     "home.suggest.title": "智能建议", "home.suggest.empty": "一切正常，没有需要处理的建议",
-    "home.suggest.note.safe": "可安全清理，不影响系统使用", "home.suggest.clean": "立即清理", "home.suggest.optimize": "去优化",
+      "home.suggest.optimize": "去优化",
     "home.suggest.startup.title": "开机启动建议", "home.suggest.startup.note": "发现 {0} 个高影响启动项，建议优化",
-    "home.hero.note": "让电脑更干净\n运行更流畅！",
+
     # 智能扫描
-    "scan.start": "开始扫描", "scan.cover": "一次扫描覆盖：系统垃圾 · 浏览器缓存 · 应用缓存 · 回收站",
+     "scan.cover": "一次扫描覆盖：系统垃圾 · 浏览器缓存 · 应用缓存 · 回收站",
     "scan.privacy": "扫描全程在本地进行；默认只勾选安全项目，高风险项目永远不会被自动选中。",
     "scan.preparing": "准备扫描…", "scan.found": "已发现 —", "scan.done": "扫描完成",
     "scan.reselectall": "全选安全项",
@@ -89,7 +87,7 @@ ZH = {
     "dlg.clean.selected.title": "确认清理所选项？", "dlg.clean.amount": "即将清理 {0} 的数据。",
     "dlg.clean.nrules": "即将清理 {0} 类项目，共 {1}。", "dlg.clean.confirmitems": "包含需要确认的项目：",
     "dlg.clean.quarantinehint": "可恢复类文件将进入隔离区。",
-    "dlg.quickclean.title": "清理{0}？", "dlg.quickclean.msg": "预计可释放 {0}。\n可恢复类文件会进入隔离区。",
+
     # 空间分析
     "space.tab.overview": "概览", "space.tab.large": "大文件", "space.tree.title": "文件夹占用排行",
     "space.tree.hint": "点击展开子目录；已跳过系统链接与无权限目录",
@@ -100,7 +98,7 @@ ZH = {
     "space.used.f": "已使用 {0} / {1}（{2:F1}%），可用 {3}", "space.used.f2": "已使用 {0} / {1}，可用 {2}",
     "space.analyzed.f": "分析于 {0} · {1:N0} 个文件 · {2:F0} 秒", "space.lastanalysis": "上次分析：{0}",
     "space.notanalyzed": "这块磁盘还没有分析过", "space.large.filter": "大小筛选",
-    "space.large.none": "没有找到大于 {0:F0} MB 的文件", "space.modified": "修改于", "space.file": "文件",
+    "space.large.none": "没有找到大于 {0:F0} MB 的文件",
     "space.recycle.title": "移入回收站？", "space.recycle.msg": "{0}（{1}）将移入回收站，可随时还原。",
     "toast.whitelisted": "已加入白名单，扫描与清理将跳过该文件", "toast.largecleaned": "清理了大文件 {0}",
     "toast.recycled": "已移入回收站，释放 {0}", "toast.recyclefailed": "移入回收站失败，文件可能被占用",
@@ -136,10 +134,10 @@ ZH = {
     "tool.purge.msg": "隔离区中的 {0} 个项目将被永久删除，无法恢复。",
     "tool.shred.title": "文件粉碎", "tool.shred.desc": "从文件系统中永久删除文件，使其不进入回收站。注意：对 SSD 无法保证底层闪存数据立即物理覆写。此操作不可恢复，请谨慎选择文件。",
     "tool.shred.confirm.title": "确认粉碎？", "tool.shred.confirm.msg": "{0}\n\n{1} 将被覆写后永久删除，不进入回收站，无法通过恢复软件轻易还原。\n\n此操作不可恢复！",
-    "tool.shred.log": "粉碎了{0}「{1}」", "tool.folder": "文件夹", "tool.file": "文件",
+
     "tool.dup.title": "重复文件", "tool.dup.desc": "通过内容哈希确认重复（不是只看文件名）。扫描范围默认为图片、视频与下载目录。",
     "tool.dup.none": "没有发现重复文件", "tool.dup.summary": "{0} 组重复文件，可释放 {1}",
-    "tool.dup.progress": "已扫描 {0:N0} 个文件…", "tool.dup.more": "… 还有 {0} 组未显示",
+    "tool.dup.progress": "已扫描 {0:N0} 个文件…",
     "tool.dup.group": "{0} 个相同文件 · 每个 {1} · 可释放 {2}", "tool.dup.tip": "勾选 = 删除这份副本",
     "tool.dup.clean.title": "删除选中的副本？", "tool.dup.clean.msg": "共 {0} 个文件，{1}，将移入回收站（可还原）。",
     "tool.history.title": "清理历史", "tool.win.title": "Windows 快捷工具", "tool.win.desc": "直达系统自带工具，安全无风险",
@@ -177,16 +175,15 @@ ZH = {
     "settings.row.autoclean": "自动清理", "settings.row.autoclean.d": "按计划自动清理临时文件与缓存等安全项目",
     "settings.row.autoclean.freq": "自动清理频率", "settings.row.autoclean.freq.d": "应用运行期间在后台执行",
     "settings.row.notifydisk": "磁盘空间不足提醒", "settings.row.notifydisk.d": "系统盘剩余不足 10% 时提醒（低频，不打扰）",
-    "settings.row.notifyauto": "自动清理结果通知", "settings.row.notifyweekly": "每周空间报告",
-    "settings.row.notifynews": "产品消息", "settings.row.notifynews.d": "新功能与活动通知，默认关闭",
+
     "settings.row.threads": "扫描线程数", "settings.row.threads.d": "线程越多扫描越快，但机械硬盘建议调低",
-    "settings.row.hidden": "扫描隐藏文件", "settings.row.junction": "跟随目录链接 (Junction)",
-    "settings.row.junction.d": "跟随符号链接扫描可能造成重复统计，默认关闭",
+
+
     "settings.row.stats": "匿名使用统计", "settings.row.stats.d": "仅上报功能使用次数与错误码，不含任何文件信息；当前版本完全不上传数据",
     "settings.row.crash": "崩溃报告",
     "settings.privacy.desc": "扫描数据全部保存在本地。本应用不收集、不上传任何文件名、路径与内容。",
     "settings.about.slogan": "清得明白，优化得安心。", "settings.about.support": "支持与反馈",
-    "settings.about.site": "支持网站", "settings.about.email": "联系邮箱", "settings.about.repo": "开源仓库",
+    "settings.about.site": "支持网站", "settings.about.email": "联系邮箱",
     "settings.about.wechat": "微信扫码或搜索「馋熊冰」，获取使用技巧与更新动态。",
     # 向导
     "wizard.welcome": "欢迎使用清理优化大师",
@@ -202,11 +199,11 @@ ZH = {
     "dlg.exit.title": "退出清理优化大师？", "dlg.exit.msg": "退出后将不再提供自动清理与磁盘空间监控。",
     "toast.traymin": "已最小化到托盘，右键托盘图标可退出",
     "toast.scanstopped": "已停止扫描", "toast.scanfailed": "扫描失败：", "toast.noselect": "请先勾选要清理的项目",
-    "toast.cleancancelled": "清理已取消", "toast.cleanfailed": "清理失败：", "toast.nothing": "没有发现可清理的内容",
-    "toast.cleaned": "已清理，释放了 {0}", "toast.readfailed": "读取失败：", "toast.langapplied": "界面语言已切换",
+    "toast.cleancancelled": "清理已取消", "toast.cleanfailed": "清理失败：",
+     "toast.readfailed": "读取失败：", "toast.langapplied": "界面语言已切换",
     # ===== v1.2 追加 =====
     # 首页·环形仪表与实时监控
-    "home.disk.center": "已用", "home.mon.title": "实时系统状态", "home.mon.live": "实时",
+     "home.mon.title": "实时系统状态", "home.mon.live": "实时",
     "home.mon.cpu": "处理器", "home.mon.cores": "{0} 核心", "home.mon.ram": "内存",
     "home.mon.ram.f": "{0} / {1}", "home.mon.uptime": "运行时间",
     "home.mon.uptime.d": "{0} 天 {1} 小时", "home.mon.uptime.h": "{0} 小时 {1} 分", "home.mon.uptime.m": "{0} 分钟",
@@ -219,7 +216,7 @@ ZH = {
     "tool.quar.meta": "{0} · {1} 入库",
     "tool.shred.pickfile": "选择要粉碎的文件", "tool.shred.pickdir": "选择要粉碎的文件夹",
     "tool.dup.nodirs": "没有可扫描的目录", "tool.dup.nosel": "请先勾选要删除的副本",
-    "tool.dup.cleaned": "删除了 {0} 个重复文件",
+
     "tool.win.openfail": "无法打开：",
     "tool.win.dns": "刷新 DNS 缓存", "tool.win.dns.d": "修复网页打不开、解析慢",
     "tool.win.dns.ok": "DNS 缓存已刷新", "tool.win.dns.fail": "刷新失败：",
@@ -234,22 +231,19 @@ ZH = {
     "tool.empty.nosel": "请先勾选要删除的空文件夹",
     "tool.empty.clean.title": "删除选中的空文件夹？",
     "tool.empty.clean.msg": "{0} 个空文件夹将移入回收站（可还原）。",
-    "tool.empty.cleaned": "已删除 {0} 个空文件夹",
+
     # 空间分析·补充
     "space.large.summary": "{0} 个文件 · 共 {1}", "space.addwhitelist": "加入白名单",
-    "space.nosubdir": "(无子目录)", "space.nfiles": "{0} 文件",
-    # 更新检查
+    "space.nosubdir": "(无子目录)", # 更新检查
     "settings.update.check": "检查更新", "update.checking": "正在检查更新…",
-    "update.found": "发现新版本 v{0}", "update.latest": "已是最新版本", "update.failed": "检查更新失败",
+     "update.latest": "已是最新版本", "update.failed": "检查更新失败",
     "update.available": "发现新版本 v{0}，可在设置-关于中查看",
-    "update.dlg.title": "发现新版本 v{0}？",
-    "update.dlg.msg": "当前版本 {0}，最新版本 {1}。\n是否前往下载页？",
-    "update.dlg.open": "前往下载",
+
     # ===== v1.3 追加 =====
     # 健康评分
     "score.excellent": "状态优秀", "score.good": "状态良好", "score.fair": "建议清理", "score.poor": "需要立即清理",
-    "home.health.title": "健康评分", "home.health.tip": "点击立即优化", "home.health.unit": "分",
-    "home.health.junk": "{0} 垃圾", "home.health.high": "{0} 个高影响启动", "home.health.free": "磁盘剩余 {0:F0}%",
+      "home.health.unit": "分",
+
     # 清理统计
     "home.stats.days7": "近 7 日释放", "home.stats.total": "累计释放 {0} · {1} 次清理",
     # 命令面板
@@ -297,13 +291,13 @@ ZH = {
     # ===== v2.0 追加 =====
     "startup.note.core": "Windows 核心组件，不建议禁用",
     "startup.uac.required": "需要管理员权限（在 UAC 弹窗中允许后重试）",
-    "quar.err.notfound": "文件不存在", "quar.err.locked": "文件被占用",
+
     "quar.err.norecord": "记录不存在", "quar.err.missing": "隔离文件已丢失",
     "deliveryopt.note": "通过系统官方机制清理",
     "deliveryopt.uac": "需要管理员权限，请在 UAC 弹窗中允许",
     "recycle.count": "{0} 个项目", "recycle.err.empty": "清空回收站失败",
     # ===== v2.1 追加 =====
-    "clean.skip.subitems": "{0} 个子项被跳过", "quar.err.move": "无法移入隔离区",
+    "clean.skip.subitems": "{0} 个子项被跳过",
     "del.err.denied": "权限不足", "del.err.locked": "文件被占用", "del.err.link": "无法删除链接",
     "priv.records": "（{0} 条记录）", "priv.norecords": "（无记录）",
     "priv.clipboard.locked": "剪贴板被其他程序占用",
@@ -317,9 +311,9 @@ ZH = {
     "settings.custom.empty": "暂无自定义清理目录", "settings.custom.protected": "该目录属于受保护的用户数据目录，不能加入清理",
     "startup.boottime": "上次开机 {0:F1} 秒", "space.filter.all": "全部",
     # ===== v2.3 追加 =====
-    "hc.start": "开始全面体检", "hc.never": "还没有体检过，点击开始",
-    "hc.last": "上次评分 {0} · {1}",
-    "hc.summary.title": "体检摘要", "hc.summary.score": "当前评分 {0} · {1}",
+    "hc.start": "开始全面体检",
+
+    "hc.summary.title": "体检摘要",
     "hc.factor.disk": "磁盘余量", "hc.factor.junk": "垃圾体量", "hc.factor.startup": "启动负担",
     "hc.todo.startup": "{0} 个高影响启动项，可能拖慢开机", "hc.todo.maint": "{0} 项系统维护未开启",
     "hc.done.score": "预计评分 {0} → {1}（重启扫描后生效）",
@@ -365,20 +359,6 @@ LANGS = {
     "es-ES": merge_over(EN, lang_data_eu.ES),
     "de-DE": merge_over(EN, lang_data_eu.DE),
 }
-# zh-TW 规则名：从 zh-CN 做常用字转换
-OFFLINE_MESSAGES = {
-    "zh-CN": "离线版本：已禁用联网更新、外部链接及数据上报。",
-    "zh-TW": "離線版本：已停用網路更新、外部連結及資料回報。",
-    "en-US": "Offline build: online updates, external links and data reporting are disabled.",
-    "ja-JP": "オフライン版：オンライン更新、外部リンク、データ送信は無効です。",
-    "ko-KR": "오프라인 버전: 온라인 업데이트, 외부 링크 및 데이터 전송이 비활성화됩니다.",
-    "de-DE": "Offline-Version: Online-Updates, externe Links und Datenübermittlung sind deaktiviert.",
-    "fr-FR": "Version hors ligne : mises à jour en ligne, liens externes et envoi de données désactivés.",
-    "es-ES": "Versión sin conexión: actualizaciones en línea, enlaces externos y envío de datos desactivados.",
-}
-for code, message in OFFLINE_MESSAGES.items():
-    LANGS[code]["privacy.offline"] = message
-
 from lang_data_ui import UI_STRINGS
 for code, strings in UI_STRINGS.items():
     LANGS[code].update(strings)
@@ -403,7 +383,6 @@ def esc(s):
 
 os.makedirs(OUT, exist_ok=True)
 master = set(ZH.keys()) | {f"rule.{r[0]}.{f}" for r in RULES for f in ("name", "reason", "impact")}
-ok = True
 for code, d in LANGS.items():
     missing = master - set(d.keys())
     if missing:

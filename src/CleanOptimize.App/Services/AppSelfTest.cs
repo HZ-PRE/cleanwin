@@ -24,6 +24,46 @@ internal static class AppSelfTest
             catch (Exception ex) { failed++; Console.WriteLine("[FAIL] " + name + ": " + ex); }
         }
         Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        Loc.SetLanguage("zh-CN");
+        Check("更新版本、公开安装资产和请求数据边界", UpdateServiceTests.VersionsAndRequest);
+        Check("更新请求合并、缓存及失败状态保留", () => RunUiTask(UpdateServiceTests.RequestLifecycle()));
+        Check("更新下载校验、长度限制及取消", () => RunUiTask(UpdateServiceTests.DownloadIntegrity()));
+        Check("更新双标签布局、确认文字与安装失败保护", UpdateServiceTests.UserInterface);
+        Check("快捷清理确认、取消、低风险筛选与白名单保护", () => RunUiTask(CleanupFeatureTests.QuickCleanup()));
+        Check("自动清理通知开关、隔离计数、失败、取消及并发保护", () => RunUiTask(CleanupFeatureTests.AutoCleanNotifications()));
+        Check("卸载退出通道按完整路径隔离并兼容路径大小写", () =>
+        {
+            if (UninstallLifetime.EventName(@"C:\Apps\CleanOptimize.exe") != UninstallLifetime.EventName(@"c:\apps\cleanoptimize.exe") ||
+                UninstallLifetime.EventName(@"C:\Apps\CleanOptimize.exe") == UninstallLifetime.EventName(@"C:\Portable\CleanOptimize.exe"))
+                throw new InvalidOperationException("卸载通道未按安装路径隔离");
+        });
+        Check("首页评分、分类占比、零值与未扫描状态正确", HomeDashboardTests.DataStates);
+        Check("紧凑首页按需明细、统计入口与监控更新分配", HomeDashboardTests.CompactDetailsAndMonitor);
+        Check("关于页双微信图片、放大关闭、限尺寸解码及八语言双主题布局", HomeDashboardTests.WechatResource);
+        Check("首页切换磁盘隔离分析数据且跳转不自动扫描", HomeDashboardTests.SelectedDisk);
+        Check("圆环满值、无效值、重复刷新分配与 CPU 采样恢复", HomeDashboardTests.Gauge);
+        Check("首页 8 语言双主题 3 宽度及重复刷新可视树有界", HomeDashboardTests.LayoutAndBoundedVisuals);
+        Check("清理界面八语言区分删除与隔离量并按实际处理数显示进度", () =>
+        {
+            var main = new MainWindow();
+            try
+            {
+                foreach (var (language, _) in Loc.Supported)
+                {
+                    Loc.SetLanguage(language);
+                    var page = new SmartScanPage(main);
+                    page.ApplyCleanProgress(new CleanProgress { Processed = 25, Total = 100, FreedBytes = 0, QuarantinedBytes = 4096 });
+                    if (((ProgressBar)page.FindName("CleanProgressBar")).Value != 25) throw new InvalidOperationException("进度按通知数累计");
+                    page.ApplyCleanOutcome(new CleanSummary { QuarantineCount = 4, QuarantinedBytes = 4096 });
+                    if (((TextBlock)page.FindName("DoneFreedText")).Text != string.Format(Loc.T("done.freed.total"), Core.Utils.SizeText.OfBytes(0)) ||
+                        !((TextBlock)page.FindName("DoneNoteText")).Text.Contains(string.Format(Loc.T("ui.clean.quarantined"), Core.Utils.SizeText.OfBytes(4096))))
+                        throw new InvalidOperationException("隔离量被计为释放量");
+                    page.ApplyCleanOutcome(new CleanSummary { Cancelled = true });
+                    if (((TextBlock)page.FindName("DoneTitleText")).Text != Loc.T("done.cancelled")) throw new InvalidOperationException("取消被显示为完成");
+                }
+            }
+            finally { main.ForceClose(); }
+        });
         Check("应用搜索、清空、排序保留选择与刷新真实清单", () =>
         {
             var main = new MainWindow();
@@ -76,6 +116,16 @@ internal static class AppSelfTest
             {
                 ThemeManager.Apply(theme);
                 Loc.SetLanguage(language);
+                var dictionaries = Application.Current.Resources.MergedDictionaries;
+                if (dictionaries.Count != 3) throw new InvalidOperationException("语言字典重复保留");
+                var dictionary = dictionaries[2];
+                Loc.SetLanguage(language);
+                if (!ReferenceEquals(dictionary, dictionaries[2])) throw new InvalidOperationException("相同语言重复分配字典");
+                foreach (var key in dictionary.Keys.OfType<string>())
+                    if (string.IsNullOrWhiteSpace(Loc.T(key)) || Loc.T(key) == key) throw new InvalidOperationException("缺少语言资源: " + key);
+                foreach (var rule in new RuleCatalog().Rules)
+                    foreach (var field in new[] { "name", "reason", "impact" })
+                        if (Loc.RuleField(rule.Id, field, "__missing__") == "__missing__") throw new InvalidOperationException("缺少动态规则文案: " + rule.Id);
                 if (Loc.T("privacy.offline") == "privacy.offline") throw new InvalidOperationException("缺少离线提示");
                 var main = new MainWindow();
                 try
@@ -235,7 +285,7 @@ internal static class AppSelfTest
             }
             finally { main.Close(); }
         });
-        Check("语言选项显示原生名称，目录链接保护不可开启", () =>
+        Check("语言选项显示原生名称，保留两项禁用上报设置，移除无效通知", () =>
         {
             var main = new MainWindow();
             try
@@ -249,7 +299,10 @@ internal static class AppSelfTest
                         throw new InvalidOperationException("语言名称与代码映射不正确");
                 var disabled = LogicalDescendants(settings).OfType<System.Windows.Controls.Primitives.ToggleButton>()
                     .Where(t => !t.IsEnabled).ToArray();
-                if (!disabled.Any(t => t.IsChecked == false)) throw new InvalidOperationException("缺少目录链接保护");
+                if (disabled.Length != 2 || disabled.Any(t => t.IsChecked != false)) throw new InvalidOperationException("隐私开关丢失或仍有其他无效开关");
+                var notifications = (StackPanel)settings.FindName("NotifySection");
+                if (LogicalDescendants(notifications).OfType<System.Windows.Controls.Primitives.ToggleButton>().Count() != 2)
+                    throw new InvalidOperationException("仍有无效通知选项");
             }
             finally { main.Close(); }
         });
@@ -400,7 +453,7 @@ internal static class AppSelfTest
         return failed == 0 ? 0 : 1;
     }
 
-    private static void RunUiTask(Task task)
+    internal static void RunUiTask(Task task)
     {
         if (!task.IsCompleted)
         {
@@ -447,6 +500,11 @@ internal static class AppSelfTest
             try
             {
                 var scan = new SmartScanPage(main);
+                var home = new HomePage(main);
+                home.ApplyDashboard(HomeDashboardTests.Fixture());
+                home.UpdateMonitor();
+                RunUiTask(Task.Delay(100));
+                home.UpdateMonitor();
                 var rules = new List<IScanRule> { new UserTempRule(), new UpdateCacheRule() };
                 scan.BuildResultView(rules, rules.Select(r => new RuleResult { RuleId = r.Id, Name = r.Name, Group = r.Group,
                     Risk = r.Risk, FileCount = 128, TotalSize = 128L * 1024 * 1024 }).ToList(), refreshHealth: false);
@@ -455,7 +513,7 @@ internal static class AppSelfTest
                 var space = new SpaceAnalysisPage(main);
                 var tree = (TreeView)space.FindName("FolderTree");
                 foreach (var (name, size) in new[] { ("Users", 76L), ("Windows", 42L), ("Program Files", 38L) })
-                    tree.Items.Add(new FolderNodeVM(name, size * 1024 * 1024 * 1024, 1024, @"C:\" + name) { Percent = size / 186.0 * 100 });
+                    tree.Items.Add(new FolderNodeVM(name, size * 1024 * 1024 * 1024, @"C:\" + name));
                 ((FrameworkElement)space.FindName("TreeCard")).Visibility = Visibility.Visible;
                 ((TextBlock)space.FindName("OverviewUsedText")).Text = "186 GB / 256 GB";
                 ((ProgressBar)space.FindName("DiskUsageBar")).Value = 73;
@@ -467,11 +525,30 @@ internal static class AppSelfTest
                 appList.SetItems(examples);
                 ((TextBlock)apps.FindName("AppCount")).Text = string.Format(Loc.T("ui.apps.count"), examples.Count, examples.Count);
                 appList.SelectedIndex = 0;
-                foreach (var (name, page) in new (string, Page)[] { ("scan", scan), ("space", space),
+                main.ApplyUpdateResult(UpdateServiceTests.NewRelease);
+                var updateDialog = new Windows.UpdateWindow(main, UpdateServiceTests.NewRelease);
+                try
+                {
+                    var updateContent = (FrameworkElement)updateDialog.Content;
+                    updateContent.Measure(new System.Windows.Size(500, double.PositiveInfinity));
+                    int updateHeight = (int)Math.Ceiling(updateContent.DesiredSize.Height);
+                    Layout(updateContent, 500, updateHeight);
+                    var updateBitmap = new RenderTargetBitmap(500, updateHeight, 96, 96, PixelFormats.Pbgra32);
+                    updateBitmap.Render(updateContent);
+                    var updateEncoder = new PngBitmapEncoder(); updateEncoder.Frames.Add(BitmapFrame.Create(updateBitmap));
+                    using var updateFile = System.IO.File.Create(System.IO.Path.Combine(output, $"update-confirm-{theme}.png"));
+                    updateEncoder.Save(updateFile);
+                }
+                finally { updateDialog.Close(); }
+                var about = new SettingsPage(main); about.SelectSection("about");
+                var expandedHome = new HomePage(main); expandedHome.ApplyDashboard(HomeDashboardTests.Fixture());
+                ((Expander)expandedHome.FindName("DetailsExpander")).IsExpanded = true;
+                foreach (var (name, page) in new (string, Page)[] { ("about", about), ("home-details", expandedHome), ("home", home), ("scan", scan), ("space", space),
                     ("apps", apps), ("startup", new StartupPage(main)), ("tools", new ToolboxPage(main)), ("settings", new SettingsPage(main)) })
                 {
                     page.Background = (Brush)Application.Current.FindResource("PageBgBrush");
                     Layout(page, 760, 620);
+                    if (name == "about") { ((ScrollViewer)page.FindName("SettingsScroll")).ScrollToEnd(); page.UpdateLayout(); }
                     var bitmap = new RenderTargetBitmap(760, 620, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(page);
                     var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -485,6 +562,18 @@ internal static class AppSelfTest
                 var toolEncoder = new PngBitmapEncoder(); toolEncoder.Frames.Add(BitmapFrame.Create(toolBitmap));
                 using (var toolFile = System.IO.File.Create(System.IO.Path.Combine(output, $"tools-active-{theme}.png"))) toolEncoder.Save(toolFile);
                 var shell = (FrameworkElement)main.Content;
+                main.Navigate(PageKey.Home);
+                main.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                var dashboard = (HomePage)main.PageHost.Content;
+                RunUiTask(dashboard.RefreshAsync());
+                dashboard.UpdateMonitor();
+                foreach (var size in new[] { (1000, 680), (900, 600) })
+                {
+                    Layout(shell, size.Item1, size.Item2);
+                    var shot = new RenderTargetBitmap(size.Item1, size.Item2, 96, 96, PixelFormats.Pbgra32); shot.Render(shell);
+                    var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(shot));
+                    using var file = System.IO.File.Create(System.IO.Path.Combine(output, $"home-shell-{size.Item1}-{theme}.png")); png.Save(file);
+                }
                 main.Navigate(PageKey.SmartScan);
                 main.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
                 Layout(shell, 1000, 680);

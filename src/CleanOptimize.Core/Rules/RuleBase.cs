@@ -66,8 +66,15 @@ public abstract class RuleBase : IScanRule
     {
         await Task.Run(() =>
         {
-            int total = ctx.Selected.Count;
-            int done = 0;
+            var batch = new List<CleanItem>(64);
+            void FlushQuarantine()
+            {
+                if (batch.Count == 0) return;
+                QuarantineService.Instance.MoveBatchIntoQuarantine(batch, Id, ctx.Ct,
+                    item => SafetyGuard.ValidateForClean(item.Path, ctx.AllowedRoots, ctx.Whitelist),
+                    (item, moved, error) => ctx.Report(item, moved ? CleanItemStatus.Quarantined : CleanItemStatus.Failed, error ?? ""));
+                batch.Clear();
+            }
             foreach (var item in ctx.Selected)
             {
                 ctx.Ct.ThrowIfCancellationRequested();
@@ -80,42 +87,31 @@ public abstract class RuleBase : IScanRule
                 {
                     ctx.Report(item, CleanItemStatus.NotFound, "");
                 }
+                else if (ctx.UseQuarantine)
+                {
+                    batch.Add(item);
+                    if (batch.Count == 64) FlushQuarantine();
+                }
                 else if (item.IsDirectory)
                 {
-                    // 目录：优先整体移入隔离区（同卷移动）
-                    string? qErr = null;
-                    if (ctx.UseQuarantine && QuarantineService.Instance.MoveIntoQuarantine(item.Path, Id, out qErr))
-                        ctx.Report(item, CleanItemStatus.Quarantined, "");
-                    else if (ctx.UseQuarantine && qErr != null)
-                        ctx.Report(item, CleanItemStatus.Failed, qErr);
-                    else
-                    {
-                        var (ok, fail, _) = FileUtil.DeleteDirectoryTree(item.Path);
-                        ctx.Report(item, fail == 0 ? CleanItemStatus.Success : CleanItemStatus.Failed,
-                            fail > 0 ? string.Format(Store.CoreLocalizer.T("clean.skip.subitems", "{0} 个子项被跳过"), fail) : "");
-                    }
+                    var (ok, fail, bytes) = FileUtil.DeleteDirectoryTree(item.Path);
+                    item.Size = bytes;
+                    item.DeletedBytes = bytes;
+                    ctx.Report(item, fail == 0 ? CleanItemStatus.Success : CleanItemStatus.Failed,
+                        fail > 0 ? string.Format(Store.CoreLocalizer.T("clean.skip.subitems", "{0} 个子项被跳过"), fail) : "");
                 }
                 else
                 {
-                    if (ctx.UseQuarantine && File.Exists(item.Path))
-                    {
-                        if (QuarantineService.Instance.MoveIntoQuarantine(item.Path, Id, out var err))
-                            ctx.Report(item, CleanItemStatus.Quarantined, "");
-                        else
-                            ctx.Report(item, CleanItemStatus.Failed, err ?? Store.CoreLocalizer.T("quar.err.move", "无法移入隔离区"));
-                    }
-                    else
-                    {
-                        var (ok, kind, reason) = FileUtil.DeleteFileEx(item.Path);
-                        ctx.Report(item, ok ? CleanItemStatus.Success
-                            : kind == FileUtil.DeleteFailReason.Locked ? CleanItemStatus.SkippedLocked
-                            : CleanItemStatus.Failed, reason);
-                    }
+                    // Refresh the logical length: a cache file may have changed since scanning.
+                    try { item.Size = new FileInfo(item.Path).Length; }
+                    catch (Exception ex) { ctx.Report(item, CleanItemStatus.Failed, ex.Message); continue; }
+                    var (ok, kind, reason) = FileUtil.DeleteFileEx(item.Path);
+                    ctx.Report(item, ok ? CleanItemStatus.Success
+                        : kind == FileUtil.DeleteFailReason.Locked ? CleanItemStatus.SkippedLocked
+                        : CleanItemStatus.Failed, reason);
                 }
-                done++;
-                if (done % 20 == 0 || done == total)
-                    ctx.Progress?.Report(new CleanProgress { CurrentPath = item.Path, RuleName = Name, Processed = done, Total = total });
             }
+            FlushQuarantine();
         }, ctx.Ct);
     }
 
@@ -144,7 +140,7 @@ public abstract class RuleBase : IScanRule
                 if (ctx.SkipRecentMinutes > 0 &&
                     (DateTime.Now - fi.LastWriteTime).TotalMinutes < ctx.SkipRecentMinutes) continue;
                 if (ctx.Whitelist.Count > 0 && IsWhitelisted(f, ctx)) { continue; }
-                res.Items.Add(new CleanItem { Path = f, Size = fi.Length, ModifiedTime = fi.LastWriteTime });
+                res.Items.Add(f, fi.Length, fi.LastWriteTime);
                 res.FileCount++;
                 res.TotalSize += fi.Length;
             }
@@ -181,41 +177,42 @@ public abstract class RuleBase : IScanRule
 
     private static IEnumerable<string> SafeFiles(string dir, string pattern, ScanContext ctx)
     {
-        try { return Directory.GetFiles(dir, pattern, SearchOption.TopDirectoryOnly); }
-        catch { return Enumerable.Empty<string>(); }
+        return SafeEntries(dir, pattern, directories: false, ctx);
+    }
+
+    private static IEnumerable<string> SafeEntries(string dir, string pattern, bool directories, ScanContext ctx)
+    {
+        IEnumerator<string> iterator;
+        try { iterator = (directories ? Directory.EnumerateDirectories(dir) : Directory.EnumerateFiles(dir, pattern)).GetEnumerator(); }
+        catch { yield break; }
+        using (iterator)
+        {
+            while (true)
+            {
+                ctx.Ct.ThrowIfCancellationRequested();
+                bool next;
+                try { next = iterator.MoveNext(); }
+                catch { yield break; }
+                if (!next) yield break;
+                yield return iterator.Current;
+            }
+        }
     }
 
     /// <summary>安全递归遍历：不进入 Reparse Point、排除目录、深度限制。</summary>
     protected static IEnumerable<string> SafeWalk(string root, ScanContext ctx, int maxDepth = 12)
     {
-        var stack = new Stack<(string dir, int depth)>();
-        stack.Push((root, 0));
-        while (stack.Count > 0)
+        return Walk(root, 0);
+        IEnumerable<string> Walk(string dir, int depth)
         {
             ctx.Ct.ThrowIfCancellationRequested();
-            var (dir, depth) = stack.Pop();
             if (PathUtil.IsReparsePoint(dir) || IsWhitelisted(dir, ctx) ||
-                ctx.ExcludedPaths.Any(e => !string.IsNullOrWhiteSpace(e) && PathUtil.IsUnder(dir, e))) continue;
+                ctx.ExcludedPaths.Any(e => !string.IsNullOrWhiteSpace(e) && PathUtil.IsUnder(dir, e))) yield break;
             ctx.Detail?.Invoke(dir);
-            string[] files = Array.Empty<string>(), dirs = Array.Empty<string>();
-            try
-            {
-                files = Directory.GetFiles(dir);
-                dirs = Directory.GetDirectories(dir);
-            }
-            catch { continue; }
-            foreach (var f in files) yield return f;
-            if (depth >= maxDepth) continue;
-            foreach (var d in dirs)
-            {
-                try
-                {
-                    if (PathUtil.IsReparsePoint(d)) continue;
-                    if (ctx.ExcludedPaths.Any(e => PathUtil.IsUnder(d, e))) continue;
-                    stack.Push((d, depth + 1));
-                }
-                catch { }
-            }
+            foreach (var f in SafeFiles(dir, "*", ctx)) yield return f;
+            if (depth >= Math.Clamp(maxDepth, 0, 64)) yield break;
+            foreach (var d in SafeEntries(dir, "*", directories: true, ctx))
+                foreach (var file in Walk(d, depth + 1)) yield return file;
         }
     }
 

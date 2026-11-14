@@ -29,7 +29,7 @@ public static class QuickActions
 
     public static void CheckUpdate(MainWindow main)
     {
-        main.ShowToast(UpdateService.OfflineMessage, ToastType.Info);
+        _ = main.CheckForUpdatesAsync();
     }
 
     /// <summary>浅色 ↔ 深色互切(system 视为浅色)。</summary>

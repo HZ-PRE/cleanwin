@@ -74,6 +74,8 @@ public sealed class RingGauge : Grid
     }
 
     private double _size = 96;
+    private double _renderedPercent;
+    private bool _isAnimating;
 
     public RingGauge(double size = 96, double stroke = 9)
     {
@@ -109,9 +111,10 @@ public sealed class RingGauge : Grid
 
     private void ApplyPercent(double pct)
     {
+        _renderedPercent = pct;
         var s = _size;
         if (s <= 0) return;
-        var p = Math.Clamp(pct, 0, 100) / 100.0;
+        var p = double.IsFinite(pct) ? Math.Clamp(pct, 0, 100) / 100.0 : 0;
         if (p <= 0.0001)
         {
             _arc.Data = null;
@@ -132,6 +135,15 @@ public sealed class RingGauge : Grid
         using (var ctx = geom.Open())
         {
             ctx.BeginFigure(start, isFilled: false, isClosed: false);
+            if (p >= 1)
+            {
+                // A single 360-degree arc has coincident endpoints and disappears in WPF.
+                ctx.ArcTo(new Point(cx, cy + r), new System.Windows.Size(r, r), 0,
+                    false, SweepDirection.Clockwise, true, false);
+                ctx.ArcTo(start, new System.Windows.Size(r, r), 0,
+                    false, SweepDirection.Clockwise, true, false);
+            }
+            else
             ctx.ArcTo(end, new System.Windows.Size(r, r), rotationAngle: 0,
                 isLargeArc: angle > 180,
                 SweepDirection.Clockwise, isStroked: true, isSmoothJoin: false);
@@ -143,7 +155,8 @@ public sealed class RingGauge : Grid
     /// <summary>带缓动的进度动画。</summary>
     public void AnimateTo(double pct, TimeSpan? duration = null)
     {
-        pct = Math.Clamp(pct, 0, 100);
+        pct = double.IsFinite(pct) ? Math.Clamp(pct, 0, 100) : 0;
+        _isAnimating = true;
         var anim = new DoubleAnimation(Percent, pct, duration ?? TimeSpan.FromMilliseconds(700))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
@@ -154,14 +167,10 @@ public sealed class RingGauge : Grid
     /// <summary>直接设置(无动画)。变化过小时跳过,避免周期刷新造成的持续重绘。</summary>
     public void SetPercent(double pct)
     {
-        var v = Math.Clamp(pct, 0, 100);
-        if (Math.Abs(v - Percent) < 0.35)
-        {
-            BeginAnimation(PercentProperty, null);
-            Percent = v;
-            return;
-        }
+        var v = double.IsFinite(pct) ? Math.Clamp(pct, 0, 100) : 0;
+        if (!_isAnimating && Math.Abs(v - _renderedPercent) < 0.35) return;
         BeginAnimation(PercentProperty, null);
+        _isAnimating = false;
         Percent = v;
     }
 }

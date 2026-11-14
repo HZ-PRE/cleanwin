@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Windows.Controls;
-using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
 namespace CleanOptimize.App.Controls;
@@ -16,7 +15,6 @@ public static class CountUp
         public DispatcherTimer? Timer;
         public Stopwatch Watch = new();
         public double From, To;
-        public Func<double, string> Format = _ => "";
     }
 
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<TextBlock, State> Map = new();
@@ -29,7 +27,6 @@ public static class CountUp
 
         st.From = st.To != 0 || st.Watch.IsRunning ? st.To : 0;
         st.To = to;
-        st.Format = format;
         st.Watch = Stopwatch.StartNew();
         st.Timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(1000.0 / 60) };
         var dur = (duration ?? TimeSpan.FromMilliseconds(600)).TotalMilliseconds;

@@ -31,14 +31,6 @@ public sealed class StartupItem
     public string Suggestion { get; set; } = "保留";
     public bool IsSystemComponent { get; set; }
     public StartupSource Source { get; set; }
-    public string SourceText => Source switch
-    {
-        StartupSource.RegHkcuRun => "注册表 (当前用户)",
-        StartupSource.RegHklmRun => "注册表 (本机)",
-        StartupSource.StartupFolderUser => "启动文件夹 (用户)",
-        StartupSource.StartupFolderCommon => "启动文件夹 (公共)",
-        _ => "计划任务",
-    };
     public string RegistryKey { get; set; } = "";
     public string ValueName { get; set; } = "";
     public string FilePath { get; set; } = "";

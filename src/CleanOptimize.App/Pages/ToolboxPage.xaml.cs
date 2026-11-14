@@ -24,6 +24,7 @@ public partial class ToolboxPage : Page, IParamPage
     private bool _emptyCleaning;
     private bool _quarantineBusy;
     private bool _shredding;
+    internal bool OperationActive => _dupCts != null || _emptyCts != null || _dupCleaning || _emptyCleaning || _quarantineBusy || _shredding;
 
     public ToolboxPage(MainWindow main)
     {
@@ -570,7 +571,7 @@ public partial class ToolboxPage : Page, IParamPage
                 string.Format(Services.Loc.T("tool.shred.confirm.msg"), path, SizeText.OfBytes(size)),
                 Services.Loc.T("btn.shred"), Services.Loc.T("btn.cancel"), danger: true)) return;
             var result = await Task.Run(() => { var ok = CleanOptimize.Core.Security.Shredder.ShredSelected(path, out var error); return (ok, error); });
-            ShredOutcomeText.Text = result.ok ? Services.Loc.T("toast.shredok") : Services.Loc.T("toast.shrefail") + "\n" + result.error;
+            ShredOutcomeText.Text = result.ok ? Services.Loc.T("toast.shredok") : Services.Loc.T("toast.shredfail") + "\n" + result.error;
             HistoryService.Add("Shred", ShredOutcomeText.Text, path, result.ok ? size : 0);
             _main.ShowToast(ShredOutcomeText.Text, result.ok ? ToastType.Success : ToastType.Warning);
         }

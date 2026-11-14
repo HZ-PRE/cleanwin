@@ -66,13 +66,21 @@ public sealed class ScannerService
     public ScanContext BuildContext(CancellationToken ct, Action<string>? detail = null)
     {
         var s = SettingsService.Current;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        long lastDetail = -100;
         return new ScanContext
         {
             Ct = ct,
-            Detail = detail,
+            Detail = detail == null ? null : path =>
+            {
+                var elapsed = clock.ElapsedMilliseconds;
+                if (elapsed - lastDetail < 100) return;
+                lastDetail = elapsed;
+                detail(path);
+            },
             SkipRecentMinutes = s.SkipRecentMinutes,
             Whitelist = new HashSet<string>(s.Whitelist, StringComparer.OrdinalIgnoreCase),
-            ExcludedPaths = s.ExcludedPaths,
+            ExcludedPaths = s.ExcludedPaths.ToList(),
         };
     }
 
@@ -135,17 +143,4 @@ public sealed class ScannerService
         return results;
     }
 
-    /// <summary>智能扫描：垃圾/浏览器/应用缓存 + 回收站 + 隐私提示（不含隐私默认项外的扫描细节）。</summary>
-    public Task<List<RuleResult>> SmartScanAsync(ScanContext ctx, IProgress<ScanProgress>? progress)
-    {
-        var rules = _catalog.Rules.Where(r =>
-            r.Group is RuleGroup.SystemJunk or RuleGroup.BrowserCache or RuleGroup.AppCache
-            or RuleGroup.RecycleBin).ToList();
-        return ScanAsync(rules, ctx, progress);
-    }
-}
-
-public static class RuleResultExtensions
-{
-    public static bool IsMeaningful(this RuleResult r) => r.Error == null && r.TotalSize > 0;
 }

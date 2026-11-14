@@ -20,8 +20,6 @@ public static class SizeText
         };
     }
 
-    /// <summary>首页卡片那种"约 X.X GB"风格。</summary>
-    public static string Approx(long bytes) => "约 " + OfBytes(bytes);
 }
 
 public static class PathUtil

@@ -6,7 +6,7 @@ namespace CleanOptimize.App.Services;
 /// <summary>
 /// 轻量多语言服务：语言字典以合并 ResourceDictionary 叠加，
 /// XAML 用 {DynamicResource key}、代码用 Loc.T(key) 取词。
-/// 回退链：当前语言 → en-US → zh-CN（基础字典，App.xaml 常驻）。
+/// 翻译回退在生成资源时完成；运行时只加载当前语言的完整字典。
 /// </summary>
 public static class Loc
 {
@@ -34,25 +34,16 @@ public static class Loc
     {
         var code = language == "auto" ? DetectSystemLanguage() : language;
         if (!Supported.Any(s => s.Code == code)) code = "zh-CN";
-        _current = code;
-
         var merged = Application.Current.Resources.MergedDictionaries;
-        // 结构：[0]=主题色, [1]=控件, [2]=zh-CN 基础字典, [3]=en-US 回退, [4]=当前语言覆盖
-        var zhUri = new Uri($"Assets/Langs/zh-CN.xaml", UriKind.Relative);
-        var enUri = new Uri($"Assets/Langs/en-US.xaml", UriKind.Relative);
-
-        // 移除旧的语言层（索引 2..4）
+        var uri = new Uri($"Assets/Langs/{code}.xaml", UriKind.Relative);
+        if (_current == code && merged.Count == 3 && merged[2].Source == uri) return;
+        // 先加载新字典；加载失败时仍保留当前可用语言。
+        var dictionary = new ResourceDictionary { Source = uri };
+        // 结构：[0]=主题色, [1]=控件, [2]=当前语言。每种语言已包含生成时的回退词条。
         for (int i = merged.Count - 1; i >= 2; i--)
             merged.RemoveAt(i);
-
-        var idx = merged.Count;
-        merged.Add(new ResourceDictionary { Source = zhUri });   // 底层：全量基础
-        if (code != "zh-CN")
-        {
-            merged.Add(new ResourceDictionary { Source = enUri });   // 中层：英文回退
-            var uri = new Uri($"Assets/Langs/{code}.xaml", UriKind.Relative);
-            merged.Add(new ResourceDictionary { Source = uri });     // 顶层：当前语言
-        }
+        merged.Add(dictionary);
+        _current = code;
         LanguageChanged?.Invoke();
     }
 
@@ -80,7 +71,7 @@ public static class Loc
         return "zh-CN";
     }
 
-    /// <summary>代码取词；缺失时回退链由 WPF 资源查找顺序保证，最终返回 key 本身。</summary>
+    /// <summary>代码取词；翻译回退已在构建时合并，缺失时返回 key 本身。</summary>
     public static string T(string key)
     {
         var v = Application.Current?.TryFindResource(key);

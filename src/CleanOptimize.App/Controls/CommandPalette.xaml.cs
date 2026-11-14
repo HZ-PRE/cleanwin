@@ -26,7 +26,6 @@ public partial class CommandPalette : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         BuildList("");
-        List.SelectionChanged += (s, e) => { };
     }
 
     // ————— 开关 —————
@@ -63,6 +62,7 @@ public partial class CommandPalette : System.Windows.Controls.UserControl
         new() { Id = "page.Toolbox", Title = T("nav.toolbox"), Subtitle = T("cmd.cat.nav"), IconKey = "ToolboxIcon" },
         new() { Id = "page.Settings", Title = T("nav.settings"), Subtitle = T("cmd.cat.nav"), IconKey = "GearIcon" },
         new() { Id = "act.quickscan", Title = T("cmd.quickscan"), Subtitle = T("cmd.cat.action"), IconKey = "BroomIcon" },
+        new() { Id = "act.quickclean", Title = T("ui.quick.title"), Subtitle = T("ui.quick.description"), IconKey = "BroomIcon" },
         new() { Id = "act.analyze", Title = T("cmd.analyze"), Subtitle = T("cmd.cat.action"), IconKey = "PieIcon" },
         new() { Id = "act.dupscan", Title = T("cmd.dupscan"), Subtitle = T("cmd.cat.action"), IconKey = "RefreshIcon" },
         new() { Id = "act.emptyscan", Title = T("cmd.emptyscan"), Subtitle = T("cmd.cat.action"), IconKey = "FolderIcon" },

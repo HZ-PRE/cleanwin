@@ -24,6 +24,9 @@ public sealed class SystemMonitorService
     private long _lastIdle, _lastKernel, _lastUser;
     private bool _hasLast;
 
+    /// <summary>Discard the old CPU interval after the dashboard resumes.</summary>
+    public void Reset() => _hasLast = false;
+
     /// <summary>采样一次。首次调用 CPU 返回 null（差分需要两次采样）。</summary>
     public Snapshot Sample()
     {

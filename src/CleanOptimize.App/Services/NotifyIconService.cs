@@ -35,7 +35,24 @@ public sealed class NotifyIconService : IDisposable
         _icon.DoubleClick += (s, e) => OpenMainWindow();
 
         Loc.LanguageChanged += RebuildOnLanguageChanged;
+        AutoCleanScheduler.Instance.Completed += ShowAutoCleanResult;
     }
+
+    private void ShowAutoCleanResult(Core.Models.CleanSummary summary)
+    {
+        if (_disposed || !_main.CanInteract || !SettingsService.Current.NotifyAutoCleanResult) return;
+        var message = AutoCleanMessage(summary);
+        bool warning = summary.FailCount > 0 || summary.SkipCount > 0;
+        if (_main.IsVisible && _main.WindowState != WindowState.Minimized)
+            _main.ShowToast(message, warning ? ToastType.Warning : ToastType.Success);
+        else
+            _icon?.ShowBalloonTip(5000, Loc.T("ui.autoclean.title"), message,
+                warning ? System.Windows.Forms.ToolTipIcon.Warning : System.Windows.Forms.ToolTipIcon.Info);
+    }
+
+    internal static string AutoCleanMessage(Core.Models.CleanSummary summary) => string.Format(Loc.T("ui.autoclean.result"),
+        Core.Utils.SizeText.OfBytes(summary.FreedBytes), Core.Utils.SizeText.OfBytes(summary.QuarantinedBytes),
+        summary.SuccessCount + summary.QuarantineCount, summary.SkipCount, summary.FailCount);
 
     private static string ToolTipText()
     {
@@ -56,6 +73,10 @@ public sealed class NotifyIconService : IDisposable
             if (_main.PageHost.Content is Pages.SmartScanPage p) p.StartScanFromUi();
         });
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        menu.Items.Add(Loc.T("ui.quick.title"), null, (_, _) =>
+        {
+            if (OpenMainWindow()) QuickCleanPlan.Open(_main);
+        });
         var autoItem = new System.Windows.Forms.ToolStripMenuItem(AutoCleanText())
         {
             Checked = SettingsService.Current.AutoCleanEnabled,
@@ -94,6 +115,7 @@ public sealed class NotifyIconService : IDisposable
         _disposed = true;
         _main.Closed -= MainClosed;
         Loc.LanguageChanged -= RebuildOnLanguageChanged;
+        AutoCleanScheduler.Instance.Completed -= ShowAutoCleanResult;
         if (_icon != null)
         {
             var image = _icon.Icon;

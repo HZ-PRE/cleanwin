@@ -76,12 +76,10 @@
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="90"/>
-                    <ColumnDefinition Width="0"/>
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="{Binding Name}" FontSize="12.5" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FullPath}"/>
                   <ProgressBar Grid.Column="1" Value="{Binding Percent}" Maximum="100" Height="6" Margin="10,0,14,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryBrush}" Opacity="0.8"/>
                   <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
-                  <TextBlock Grid.Column="3" Text="{Binding CountText}" FontSize="10.5" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" Visibility="Collapsed"/>
                 </Grid>
               </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
@@ -120,7 +118,6 @@
                 <ComboBoxItem Content="&gt; 5 GB" Tag="5000"/>
               </ComboBox>
             </StackPanel>
-            <TextBlock Text="{DynamicResource space.large.hint}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"/>
           </Grid>
           <WrapPanel Grid.Row="1" x:Name="TypeFilterHost" Margin="6,0,6,10" Grid.ColumnSpan="2"/>
           <controls:VirtualRows xmlns:controls="clr-namespace:CleanOptimize.App.Controls" x:Name="LargeList" Grid.Row="2" SelectionChanged="LargeList_SelectionChanged" Margin="0,0,14,0"/>

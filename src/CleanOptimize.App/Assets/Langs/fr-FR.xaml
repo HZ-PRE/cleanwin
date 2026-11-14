@@ -47,7 +47,6 @@ Reprise automatique une fois terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.dupscan">Lancer l'analyse</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.emptybin">Vider la corbeille</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.exit">Quitter</sys:String>
-    <sys:String xml:space="preserve" x:Key="btn.more">Plus d'outils</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.ok">Compris</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.openbin">Ouvrir la corbeille</sys:String>
     <sys:String xml:space="preserve" x:Key="btn.purge">Vider la quarantaine</sys:String>
@@ -74,8 +73,8 @@ Reprise automatique une fois terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.before">Cliquez sur « Analyser ce groupe » ci-dessous</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.clean">Cette catégorie est déjà propre</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.group">Cliquez sur « Analyser ce groupe » ci-dessous</sys:String>
-    <sys:String xml:space="preserve" x:Key="clean.freed">Libéré —</sys:String>
-    <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} libérés</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.freed">Supprimés —</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">Les éléments de confidentialité sont décochés par défaut. Lisez chaque impact : effacer les cookies déconnecte les sites ; l'historique effacé est irrécupérable.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">Les éléments de confidentialité ne peuvent pas être restaurés après nettoyage.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">Vider la corbeille supprime définitivement son contenu. Vous pouvez d'abord l'ouvrir pour vérifier.</sys:String>
@@ -110,7 +109,6 @@ Reprise automatique une fois terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="cmd.quickscan">Analyse intelligente maintenant</sys:String>
     <sys:String xml:space="preserve" x:Key="cmd.theme.toggle">Basculer sombre / clair</sys:String>
     <sys:String xml:space="preserve" x:Key="common.approx">~</sys:String>
-    <sys:String xml:space="preserve" x:Key="common.freeable">récupérable</sys:String>
     <sys:String xml:space="preserve" x:Key="common.loading">Chargement…</sys:String>
     <sys:String xml:space="preserve" x:Key="common.n.items">{0} éléments</sys:String>
     <sys:String xml:space="preserve" x:Key="common.scanning">Analyse…</sys:String>
@@ -129,13 +127,14 @@ Reprise automatique une fois terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="dlg.clean.nrules">Nettoyage de {0} catégories, {1} au total.</sys:String>
     <sys:String xml:space="preserve" x:Key="dlg.clean.quarantinehint">Les fichiers restaurables seront mis en quarantaine.</sys:String>
     <sys:String xml:space="preserve" x:Key="dlg.clean.selected.title">Nettoyer les éléments sélectionnés ?</sys:String>
+    <sys:String xml:space="preserve" x:Key="dlg.deleteperm.msg">Supprimer définitivement « {0} » ? Cette action est irréversible.</sys:String>
+    <sys:String xml:space="preserve" x:Key="dlg.deleteperm.title">Supprimer un élément en quarantaine</sys:String>
     <sys:String xml:space="preserve" x:Key="dlg.exit.msg">Le nettoyage automatique et la surveillance du disque s'arrêtent en quittant.</sys:String>
     <sys:String xml:space="preserve" x:Key="dlg.exit.title">Quitter CleanOptimize ?</sys:String>
-    <sys:String xml:space="preserve" x:Key="dlg.quickclean.msg">Environ {0} seront libérés.
-Les fichiers restaurables vont en quarantaine.</sys:String>
-    <sys:String xml:space="preserve" x:Key="dlg.quickclean.title">Nettoyer {0} ?</sys:String>
+    <sys:String xml:space="preserve" x:Key="dns.err.flush">Échec du vidage ; les droits administrateur peuvent être nécessaires.</sys:String>
+    <sys:String xml:space="preserve" x:Key="dns.note">Cache DNS système</sys:String>
     <sys:String xml:space="preserve" x:Key="done.cancelled">Nettoyage interrompu</sys:String>
-    <sys:String xml:space="preserve" x:Key="done.freed.total">{0} libérés au total</sys:String>
+    <sys:String xml:space="preserve" x:Key="done.freed.total">{0} supprimés au total</sys:String>
     <sys:String xml:space="preserve" x:Key="done.note.quarantine">Les fichiers en quarantaine sont conservés {0} jours, restaurables depuis la boîte à outils.</sys:String>
     <sys:String xml:space="preserve" x:Key="done.note.skip">Les fichiers ignorés sont utilisés par d'autres programmes ; fermez-les et réessayez plus tard.</sys:String>
     <sys:String xml:space="preserve" x:Key="done.partial">Nettoyage terminé (certains ignorés)</sys:String>
@@ -151,17 +150,14 @@ Les fichiers restaurables vont en quarantaine.</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.factor.junk">Charge en déchets</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.factor.startup">Charge au démarrage</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.goto">Corriger</sys:String>
-    <sys:String xml:space="preserve" x:Key="hc.last">Dernier score {0} · {1}</sys:String>
-    <sys:String xml:space="preserve" x:Key="hc.never">Aucun bilan — cliquez pour commencer</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.start">Lancer le bilan complet</sys:String>
-    <sys:String xml:space="preserve" x:Key="hc.summary.score">Score {0} · {1}</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.summary.title">Résumé du bilan</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.todo.maint">{0} fonctions de maintenance désactivées</sys:String>
     <sys:String xml:space="preserve" x:Key="hc.todo.startup">{0} démarrages à fort impact ralentissent peut-être le boot</sys:String>
     <sys:String xml:space="preserve" x:Key="history.autoclean.detail">{0} réussis, {1} ignorés</sys:String>
-    <sys:String xml:space="preserve" x:Key="history.autoclean.title">Nettoyage auto : {0} libérés</sys:String>
+    <sys:String xml:space="preserve" x:Key="history.autoclean.title">Nettoyage automatique : {0} supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="history.clean.detail">{0} réussis, {1} en quarantaine, {2} ignorés, {3} échecs</sys:String>
-    <sys:String xml:space="preserve" x:Key="history.clean.title">{0} nettoyés</sys:String>
+    <sys:String xml:space="preserve" x:Key="history.clean.title">{0} supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="history.clear.msg">Tous les enregistrements seront supprimés.</sys:String>
     <sys:String xml:space="preserve" x:Key="history.clear.title">Effacer l'historique ?</sys:String>
     <sys:String xml:space="preserve" x:Key="history.empty">Aucune activité</sys:String>
@@ -180,34 +176,14 @@ Les fichiers restaurables vont en quarantaine.</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.apps">Applications</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.apps.note">Cliquer pour gérer</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.junk">Fichiers inutiles</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.card.junk.lastscan">Dernière analyse {0}</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.card.junk.note">Analyser pour voir l'espace récupérable</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.large">Gros fichiers</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.large.analyzed">Analysé</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.card.large.analyzed.note">Cliquer pour voir les détails</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.large.note">Analyser pour trouver</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.large.pending">En attente</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.startup">Démarrage</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.startup.note">éléments lancés au démarrage</sys:String>
     <sys:String xml:space="preserve" x:Key="home.card.startup.note.high">éléments à fort impact susceptibles de ralentir le démarrage</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.center">utilisés</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.free">Libre —</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.free.f">Libre {0} ({1:F1} %)</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.more">Où passe mon espace →</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.title">Disque (C:)</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.title.disk">Disque ({0})</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.total">Total —</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.total.f">Total {0}</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.used">Utilisé —</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.disk.used.f">Utilisé {0} ({1:F1} %)</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.health.free">{0:F0}% disque libre</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.health.high">{0} démarrages à fort impact</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.health.junk">{0} de déchets</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.health.tip">Cliquez pour optimiser</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.health.title">Score santé</sys:String>
     <sys:String xml:space="preserve" x:Key="home.health.unit">pts</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.hero.note">Un PC plus propre,
-plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="home.mon.cores">{0} cœurs</sys:String>
     <sys:String xml:space="preserve" x:Key="home.mon.cpu">Processeur</sys:String>
     <sys:String xml:space="preserve" x:Key="home.mon.live">en direct</sys:String>
@@ -220,20 +196,14 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="home.mon.uptime.m">{0} min</sys:String>
     <sys:String xml:space="preserve" x:Key="home.noscan">Pas encore analysé</sys:String>
     <sys:String xml:space="preserve" x:Key="home.noscan.detail">Cliquez sur « Analyser maintenant » pour commencer</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.slogan">Des analyses régulières gardent votre PC au top</sys:String>
     <sys:String xml:space="preserve" x:Key="home.space.empty">Ce disque n'a pas encore été analysé</sys:String>
     <sys:String xml:space="preserve" x:Key="home.space.title">Analyse du disque</sys:String>
     <sys:String xml:space="preserve" x:Key="home.stats.days7">Libéré · 7 derniers jours</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.stats.total">{0} libérés au total · {1} nettoyages</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.status.good">Votre PC est en bon état</sys:String>
+    <sys:String xml:space="preserve" x:Key="home.stats.total">Historique : {0} · {1} nettoyages</sys:String>
     <sys:String xml:space="preserve" x:Key="home.status.lastscan">Dernière analyse : {0}</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.status.suggest">Un nettoyage est recommandé</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.status.suggest.detail">{0} de fichiers inutiles et {1} éléments de démarrage à fort impact trouvés</sys:String>
     <sys:String xml:space="preserve" x:Key="home.status.tight">Espace disque faible</sys:String>
     <sys:String xml:space="preserve" x:Key="home.status.tight.detail">Moins de 10 % d'espace libre sur le disque système — nettoyez maintenant</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.suggest.clean">Nettoyer</sys:String>
     <sys:String xml:space="preserve" x:Key="home.suggest.empty">Tout est bon — rien à signaler</sys:String>
-    <sys:String xml:space="preserve" x:Key="home.suggest.note.safe">Nettoyage sûr, sans impact sur le système</sys:String>
     <sys:String xml:space="preserve" x:Key="home.suggest.optimize">Optimiser</sys:String>
     <sys:String xml:space="preserve" x:Key="home.suggest.startup.note">{0} éléments à fort impact — à optimiser</sys:String>
     <sys:String xml:space="preserve" x:Key="home.suggest.startup.title">Suggestion de démarrage</sys:String>
@@ -277,12 +247,9 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="priv.records"> ({0} entrées)</sys:String>
     <sys:String xml:space="preserve" x:Key="priv.runmru.note">Historique de saisie de Exécuter (Win+R)</sys:String>
     <sys:String xml:space="preserve" x:Key="priv.search.note">Historique de recherche de l'Explorateur</sys:String>
-    <sys:String xml:space="preserve" x:Key="privacy.offline">Version hors ligne : mises à jour en ligne, liens externes et envoi de données désactivés.</sys:String>
-    <sys:String xml:space="preserve" x:Key="quar.err.locked">Fichier en cours d'utilisation</sys:String>
+    <sys:String xml:space="preserve" x:Key="privacy.offline">Statistiques anonymes et rapports de panne désactivés.</sys:String>
     <sys:String xml:space="preserve" x:Key="quar.err.missing">Fichier en quarantaine introuvable</sys:String>
-    <sys:String xml:space="preserve" x:Key="quar.err.move">Impossible de déplacer en quarantaine</sys:String>
     <sys:String xml:space="preserve" x:Key="quar.err.norecord">Entrée introuvable</sys:String>
-    <sys:String xml:space="preserve" x:Key="quar.err.notfound">Fichier introuvable</sys:String>
     <sys:String xml:space="preserve" x:Key="quar.restore.suffix">restauré</sys:String>
     <sys:String xml:space="preserve" x:Key="recycle.confirm.msg">{0} fichiers ({1}) seront définitivement supprimés. Irréversible.</sys:String>
     <sys:String xml:space="preserve" x:Key="recycle.confirm.title">Vider la corbeille ?</sys:String>
@@ -432,13 +399,15 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="scan.preparing">Préparation…</sys:String>
     <sys:String xml:space="preserve" x:Key="scan.privacy">Tout s'exécute en local ; seuls les éléments sûrs sont pré-cochés, les éléments risqués ne le sont jamais.</sys:String>
     <sys:String xml:space="preserve" x:Key="scan.reselectall">Sélectionner les éléments sûrs</sys:String>
-    <sys:String xml:space="preserve" x:Key="scan.start">Lancer l'analyse</sys:String>
     <sys:String xml:space="preserve" x:Key="score.excellent">Excellent état</sys:String>
     <sys:String xml:space="preserve" x:Key="score.fair">Nettoyage conseillé</sys:String>
     <sys:String xml:space="preserve" x:Key="score.good">Bon état</sys:String>
     <sys:String xml:space="preserve" x:Key="score.poor">Nettoyer maintenant</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.about.email">E-mail</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.about.repo">Code source</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.about.follow">Suivre sur WeChat</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.about.image.preview">Cliquer pour agrandir et scanner</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.about.pay">Soutenir via WeChat</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.about.pay.note">Si cet outil vous aide, votre soutien volontaire est le bienvenu. Merci !</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.about.site">Site web</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.about.slogan">Nettoyer clairement, optimiser sereinement.</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.about.support">Support &amp; retours</sys:String>
@@ -462,7 +431,7 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.lang.auto">Langue du système</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.pick.exclude">Choisir un dossier à exclure</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.pick.whitelist">Choisir un fichier à mettre en liste blanche</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.privacy.desc">Toutes les données d'analyse restent sur cet appareil. Aucun nom de fichier, chemin ou contenu n'est collecté ou envoyé.</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.privacy.desc">Les données restent locales. Versions GitHub vérifiées au démarrage, téléchargement après confirmation. Aucune donnée de fichier envoyée.</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.autoclean">Nettoyage automatique</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.autoclean.d">Nettoie les éléments sûrs selon la planification</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.autoclean.freq">Fréquence</sys:String>
@@ -472,19 +441,13 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.closetotray">Fermer = réduire</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.closetotray.d">Le bouton fermer demande et réduit au lieu de quitter</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.crash">Rapports de plantage</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.hidden">Analyser les fichiers cachés</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.junction">Suivre les liens de répertoires (Junctions)</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.junction.d">Suivre les liens peut doubler les statistiques ; désactivé par défaut</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.language">Langue de l'interface</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.language.d">Appliqué immédiatement</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.mintotray">Réduire vers la zone de notification</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.mintotray.d">Le bouton réduire masque dans la zone de notification</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.notifyauto">Résultats du nettoyage auto</sys:String>
+    <sys:String xml:space="preserve" x:Key="settings.row.notifyauto">Résultats du nettoyage automatique</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.notifydisk">Alerte d'espace disque faible</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.notifydisk.d">Alerte sous 10 % de libre sur le disque système (rare)</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.notifynews">Actualités produit</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.notifynews.d">Nouveautés et événements, désactivé par défaut</sys:String>
-    <sys:String xml:space="preserve" x:Key="settings.row.notifyweekly">Rapport hebdomadaire</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.openlog">Données et journaux</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.openlog.d">Consulter réglages, quarantaine et journaux (diagnostic)</sys:String>
     <sys:String xml:space="preserve" x:Key="settings.row.quarantine">Mettre en quarantaine</sys:String>
@@ -515,14 +478,11 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="space.done">Analyse terminée en {0:F0} s</sys:String>
     <sys:String xml:space="preserve" x:Key="space.empty">Ce disque n'a pas encore été analysé. Cliquez sur « Analyser » ci-dessus (annulable à tout moment)</sys:String>
     <sys:String xml:space="preserve" x:Key="space.failed">Échec de l'analyse : </sys:String>
-    <sys:String xml:space="preserve" x:Key="space.file">FICHIER</sys:String>
     <sys:String xml:space="preserve" x:Key="space.filter.all">Tous</sys:String>
     <sys:String xml:space="preserve" x:Key="space.large.filter">Filtre de taille</sys:String>
     <sys:String xml:space="preserve" x:Key="space.large.none">Aucun fichier de plus de {0:F0} Mo trouvé</sys:String>
     <sys:String xml:space="preserve" x:Key="space.large.summary">{0} fichiers · {1} au total</sys:String>
     <sys:String xml:space="preserve" x:Key="space.lastanalysis">Dernière analyse : {0}</sys:String>
-    <sys:String xml:space="preserve" x:Key="space.modified">Modifié</sys:String>
-    <sys:String xml:space="preserve" x:Key="space.nfiles">{0} fichiers</sys:String>
     <sys:String xml:space="preserve" x:Key="space.nosubdir">(aucun sous-dossier)</sys:String>
     <sys:String xml:space="preserve" x:Key="space.notanalyzed">Ce disque n'a pas encore été analysé</sys:String>
     <sys:String xml:space="preserve" x:Key="space.recycle.msg">{0} ({1}) sera mis à la corbeille. Restaurable à tout moment.</sys:String>
@@ -579,20 +539,23 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="tip.min">Réduire</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.binemptied">Corbeille vidée</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.cleancancelled">Nettoyage annulé</sys:String>
-    <sys:String xml:space="preserve" x:Key="toast.cleandone">Nettoyage terminé — {0} libérés</sys:String>
-    <sys:String xml:space="preserve" x:Key="toast.cleaned">Nettoyé — {0} libérés</sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.cleandone">Nettoyage terminé : {0} supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.cleanfailed">Échec du nettoyage : </sys:String>
     <sys:String xml:space="preserve" x:Key="toast.failed">Échec de l'opération</sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.historycleared">Historique effacé</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.langapplied">Langue de l'interface modifiée</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.largecleaned">Gros fichier nettoyé {0}</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.noselect">Sélectionnez d'abord des éléments à nettoyer</sys:String>
-    <sys:String xml:space="preserve" x:Key="toast.nothing">Rien à nettoyer</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.readfailed">Échec du chargement : </sys:String>
     <sys:String xml:space="preserve" x:Key="toast.recycled">Mis à la corbeille — {0} libérés</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.recyclefailed">Échec : le fichier est peut-être en cours d'utilisation</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.reportcopied">Rapport copié dans le presse-papiers</sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.restored">« {0} » restauré</sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.restorefailed">Échec de restauration : </sys:String>
     <sys:String xml:space="preserve" x:Key="toast.scanfailed">Échec de l'analyse : </sys:String>
     <sys:String xml:space="preserve" x:Key="toast.scanstopped">Analyse arrêtée</sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.shredfail">Échec de destruction : </sys:String>
+    <sys:String xml:space="preserve" x:Key="toast.shredok">Destruction des fichiers terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.skipped"> ({0} ignorés)</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.themeapplied">Thème modifié</sys:String>
     <sys:String xml:space="preserve" x:Key="toast.traymin">Réduit dans la zone de notification — clic droit sur l'icône pour quitter</sys:String>
@@ -600,11 +563,9 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.desc">Les fichiers broyés ne passent pas par la corbeille ; les fichiers en quarantaine sont restaurables ; les doublons sont détectés par empreinte de contenu.</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.clean.msg">{0} fichiers ({1}) seront mis à la corbeille (restaurables).</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.clean.title">Supprimer les copies sélectionnées ?</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.dup.cleaned">{0} fichiers en double supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.desc">Les doublons sont confirmés par empreinte du contenu (jamais par nom). Portée par défaut : Images, Vidéos et Téléchargements.</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.dirs">Changer les dossiers</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.group">{0} fichiers identiques · {1} chacun · {2} récupérables</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.dup.more">… {0} groupes supplémentaires non affichés</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.nodirs">Aucun dossier à analyser</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.none">Aucun doublon trouvé</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.dup.nosel">Cochez d'abord les copies à supprimer</sys:String>
@@ -617,7 +578,6 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.clean">Supprimer la sélection</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.clean.msg">{0} dossiers vides seront déplacés vers la corbeille (récupérables).</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.clean.title">Supprimer les dossiers vides sélectionnés ?</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.empty.cleaned">{0} dossiers vides supprimés</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.desc">Repère, dans vos dossiers utilisateur, les dossiers dont toute l'arborescence ne contient aucun fichier. La suppression passe par la corbeille (récupérable).</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.dirs">Changer les dossiers</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.item.f">{0} sous-dossiers vides · {1}</sys:String>
@@ -631,8 +591,6 @@ plus fluide !</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.scan">Analyser les dossiers vides</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.summary">{0} dossiers vides ({1} sous-dossiers vides)</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.empty.title">Dossiers vides</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.file">fichier</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.folder">dossier</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.history.title">Historique</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.purge.msg">{0} éléments en quarantaine seront définitivement supprimés. Irréversible.</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.purge.title">Vider la quarantaine ?</sys:String>
@@ -648,7 +606,6 @@ plus fluide !</sys:String>
 Irréversible !</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.shred.confirm.title">Broyer cet élément ?</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.shred.desc">Supprime définitivement les fichiers sans passer par la corbeille. NB : sur SSD, un écrasement physique immédiat ne peut être garanti. Irréversible — choisissez avec soin.</sys:String>
-    <sys:String xml:space="preserve" x:Key="tool.shred.log">{0} « {1} » broyé</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.shred.pickdir">Choisir un dossier à broyer</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.shred.pickfile">Choisir un fichier à broyer</sys:String>
     <sys:String xml:space="preserve" x:Key="tool.shred.title">Broyeur de fichiers</sys:String>
@@ -684,14 +641,35 @@ Irréversible !</sys:String>
     <sys:String xml:space="preserve" x:Key="tray.open">Ouvrir CleanOptimize</sys:String>
     <sys:String xml:space="preserve" x:Key="tray.quickscan">Analyse rapide</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.apps.count">{0} applications sur {1}</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.autoclean.result">Supprimé {0}, mis en quarantaine {1} ; terminés {2}, ignorés {3}, échecs {4}.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.autoclean.title">Résultat du nettoyage automatique</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.clean.quarantined">{0} en quarantaine ; cela ne libère pas d’espace disque.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.duplicate.keep">Conservez au moins une copie par groupe.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.duplicate.result">{0} fichiers ({1}) mis à la corbeille ; {2} non traités.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.duplicate.running">Vérification et déplacement vers la corbeille…</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.folder.note">L’analyse ne modifie aucun fichier. Utilisez le nettoyage par catégorie pour le système.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.history.note">Consulter les résultats et les éléments ignorés</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.offline.short">Local · Hors ligne</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.analysis.note">{0} · {1} · Part de l’espace utilisé</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.details">Plus : catégories, historique et conseils</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.disk">Espace disque</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.disk.available">{0} disponibles</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.disk.capacity">{0} utilisés / {1} au total</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.disk.note">Analyse à la demande</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.disk.percent">{0:F0}% utilisés · {1}</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.large.note">Dernière analyse · ≥500 Mo · 1 000 résultats max.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.overview">Vue d’ensemble</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.pending">À analyser</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.review">Dernière analyse. Relancez une analyse avant de nettoyer.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.review.items">Voir les éléments →</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.scan.review">Vérifiez les résultats et choisissez quoi nettoyer.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.home.score.note">Estimation selon la dernière analyse, le démarrage, le disque système et la corbeille. Analyser pour actualiser.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.offline.short">Nettoyage local · Sans télémétrie</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.operation.result">{0} terminés ; {1} non traités.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.quarantine.note">Vérifier, restaurer ou supprimer les fichiers isolés</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.quick.busy">Terminez l’opération en cours avant le nettoyage.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.quick.description">Analyser les caches à faible risque puis nettoyer après confirmation.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.quick.empty">Aucun élément à faible risque à nettoyer.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.quick.title">Nettoyage rapide</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.scan.ready">Vérifiez et nettoyez à votre rythme</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.search.clear">Effacer la recherche</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.select.app">Sélectionnez une application</sys:String>
@@ -701,14 +679,20 @@ Irréversible !</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.settings.scan">Analyse et notifications</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.tools.back">‹ Tous les outils</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.uninstall.note">Vérifiez les fichiers restants après la désinstallation.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.available">Mise à jour disponible</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.busy">Terminez les opérations en cours avant de mettre à jour.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.confirm">Confirmer</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.description">Télécharger et vérifier le programme complet, puis lancer l’installation et fermer cette application. Téléchargement annulable.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.download.failed">Échec du téléchargement, de la vérification ou du lancement. Vérifiez le réseau et l’espace disque. Version actuelle inchangée.</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.downloading">Téléchargement et vérification…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.installing">Vérifié. Lancement de l’installation…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">Aucune version publique disponible</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.progress">{0} / {1} téléchargés</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.title">Mise à jour</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.versions">Version v{0} → Nouvelle v{1}</sys:String>
     <sys:String xml:space="preserve" x:Key="update.available">Nouvelle version v{0} — voir Paramètres · À propos</sys:String>
     <sys:String xml:space="preserve" x:Key="update.checking">Recherche de mises à jour…</sys:String>
-    <sys:String xml:space="preserve" x:Key="update.dlg.msg">Version actuelle {0}, dernière {1}.
-Ouvrir la page de téléchargement ?</sys:String>
-    <sys:String xml:space="preserve" x:Key="update.dlg.open">Ouvrir le téléchargement</sys:String>
-    <sys:String xml:space="preserve" x:Key="update.dlg.title">Mettre à jour vers v{0} ?</sys:String>
     <sys:String xml:space="preserve" x:Key="update.failed">Échec de la recherche</sys:String>
-    <sys:String xml:space="preserve" x:Key="update.found">Nouvelle version v{0} disponible</sys:String>
     <sys:String xml:space="preserve" x:Key="update.latest">Vous êtes à jour</sys:String>
     <sys:String xml:space="preserve" x:Key="wizard.auto.desc">Nettoie uniquement les éléments sûrs (fichiers temporaires, caches d'apps), une fois par semaine.</sys:String>
     <sys:String xml:space="preserve" x:Key="wizard.auto.no">Plus tard</sys:String>

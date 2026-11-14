@@ -163,13 +163,6 @@ public sealed class DuplicateFileService
         }
     }
 
-    public static void ClearSelection(IEnumerable<DuplicateGroup> groups)
-    {
-        foreach (var g in groups)
-            foreach (var f in g.Files)
-                f.Selected = false;
-    }
-
     private static IEnumerable<string> Walk(string root, HashSet<string> whitelist, List<string> excluded, CancellationToken ct)
     {
         var stack = new Stack<string>();

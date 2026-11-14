@@ -31,6 +31,30 @@ Expand-Archive -LiteralPath (Join-Path $dist "CleanOptimize-$Version-win-x64.zip
 Run-CheckedProcess (Join-Path $zipDir 'CleanOptimize.exe') @('--selftest', '--selftest-log', ('"' + (Join-Path $dist 'zip-selftest.log') + '"'))
 Write-Host 'ZIP 解压后独立运行、自测通过。'
 $setup = Join-Path $dist "CleanOptimizeSetup-$Version.exe"
+$fixtureProcesses = [Collections.Generic.List[Diagnostics.Process]]::new()
+$fixtureDataDirs = [Collections.Generic.List[string]]::new()
+$fixtureReadyFiles = [Collections.Generic.List[string]]::new()
+$portableFixture = $null
+$hiddenFixture = $null
+function Start-UninstallFixture([string]$Exe, [string]$Label, [string[]]$Extra = @()) {
+    $readyFile = Join-Path $dist ('uninstall-ready-' + [Guid]::NewGuid().ToString('N') + '.txt')
+    $fixtureReadyFiles.Add($readyFile)
+    $arguments = @('--uninstall-lifetime-selftest', '--ready-file', ('"' + $readyFile + '"'),
+        '--selftest-log', ('"' + (Join-Path $dist ("uninstall-running-$Label.log")) + '"')) + $Extra
+    $fixture = Start-Process -FilePath $Exe -ArgumentList $arguments -PassThru -WindowStyle Hidden
+    $fixtureProcesses.Add($fixture)
+    $deadline = [DateTime]::UtcNow.AddSeconds(20)
+    while (-not (Test-Path -LiteralPath $readyFile)) {
+        if ($fixture.HasExited -or [DateTime]::UtcNow -gt $deadline) { throw "运行中卸载样本启动失败: $Label" }
+        Start-Sleep -Milliseconds 100
+    }
+    $dataDir = [IO.Path]::GetFullPath((Get-Content -LiteralPath $readyFile -Raw).Trim())
+    $tempBoundary = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+    if (-not $dataDir.StartsWith($tempBoundary, [StringComparison]::OrdinalIgnoreCase) -or
+        [IO.Path]::GetFileName($dataDir) -notmatch '^CleanOptimizeTestData_[0-9a-f]{32}$') { throw '卸载样本数据目录越界' }
+    $fixtureDataDirs.Add($dataDir)
+    return $fixture
+}
 try {
     Run-CheckedProcess $setup @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOICONS',
         '/MERGETASKS=!desktopicon,!autostart', ('/DIR="' + $installDir + '"'), ('/LOG="' + (Join-Path $dist 'install-smoke.log') + '"'))
@@ -46,10 +70,54 @@ try {
     Write-Host "安装后全部 $installedFileCount 个发布文件 SHA256 校验通过。"
     Run-CheckedProcess (Join-Path $installDir 'CleanOptimize.exe') @('--selftest', '--selftest-log', ('"' + (Join-Path $dist 'installed-selftest.log') + '"'))
     Write-Host '安装与已安装程序自测通过。'
+    $installedExe = Join-Path $installDir 'CleanOptimize.exe'
+    $portableExe = Join-Path $zipDir 'CleanOptimize.exe'
+    $portableFixture = Start-UninstallFixture $portableExe 'portable' @('--hidden')
+    $normalFixture = Start-UninstallFixture $installedExe 'normal'
+    Run-CheckedProcess $installedExe @('--shutdown-for-uninstall')
+    if (-not $normalFixture.WaitForExit(10000) -or $normalFixture.ExitCode -ne 0 -or $portableFixture.HasExited) {
+        throw '普通窗口退出失败或误结束了绿色版'
+    }
+    if (-not (Select-String -LiteralPath (Join-Path $dist 'uninstall-running-normal.log') -Pattern '\[PASS\]' -Quiet)) {
+        throw '普通窗口未走正常关闭流程'
+    }
+    Write-Host '运行中退出：普通窗口正常关闭；其他目录绿色版保持运行。'
+    $legacyFixture = Start-UninstallFixture $installedExe 'legacy' @('--ignore-uninstall-signal', '--hidden')
+    Run-CheckedProcess $installedExe @('--shutdown-for-uninstall')
+    if (-not $legacyFixture.WaitForExit(10000) -or $portableFixture.HasExited) { throw '旧版本定向结束失败' }
+    Write-Host '运行中退出：不响应退出信号的旧版本定向结束；绿色版保持运行。'
+    $hiddenFixture = Start-UninstallFixture $installedExe 'hidden' @('--hidden')
 } finally {
-    $uninstaller = Join-Path $installDir 'unins000.exe'
-    if (Test-Path -LiteralPath $uninstaller) {
-        Run-CheckedProcess $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/LOG="' + (Join-Path $dist 'uninstall-smoke.log') + '"'))
+    try {
+        $uninstaller = Join-Path $installDir 'unins000.exe'
+        if (Test-Path -LiteralPath $uninstaller) {
+            Run-CheckedProcess $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/LOG="' + (Join-Path $dist 'uninstall-smoke.log') + '"'))
+        }
+        if ($null -ne $hiddenFixture) {
+            if (-not $hiddenFixture.WaitForExit(10000) -or $hiddenFixture.ExitCode -ne 0 -or $portableFixture.HasExited) {
+                throw '实际卸载未结束托盘进程，或误结束绿色版'
+            }
+            if (-not (Select-String -LiteralPath (Join-Path $dist 'uninstall-running-hidden.log') -Pattern '\[PASS\]' -Quiet)) {
+                throw '托盘进程未正常退出'
+            }
+            Write-Host '实际卸载：自动正常退出托盘进程；其他目录绿色版保持运行。'
+        }
+    } finally {
+        if ($null -ne $portableFixture -and -not $portableFixture.HasExited) {
+            Run-CheckedProcess (Join-Path $zipDir 'CleanOptimize.exe') @('--shutdown-for-uninstall')
+        }
+        foreach ($fixture in $fixtureProcesses) {
+            if (-not $fixture.HasExited) { $fixture.Kill(); $fixture.WaitForExit() }
+            $fixture.Dispose()
+        }
+        foreach ($dataDir in $fixtureDataDirs) {
+            if (Test-Path -LiteralPath $dataDir) {
+                if ((Get-Item -LiteralPath $dataDir -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw '样本目录不能是链接' }
+                if (@(Get-ChildItem -LiteralPath $dataDir -Force -Recurse | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) { throw '样本目录中发现链接' }
+                Remove-Item -LiteralPath $dataDir -Recurse -Force
+            }
+        }
+        foreach ($readyFile in $fixtureReadyFiles) { if (Test-Path -LiteralPath $readyFile) { Remove-Item -LiteralPath $readyFile -Force } }
     }
 }
 if (Test-Path (Join-Path $installDir 'CleanOptimize.exe')) { throw '卸载后仍残留程序文件' }

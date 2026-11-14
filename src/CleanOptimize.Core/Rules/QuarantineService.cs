@@ -16,6 +16,7 @@ public sealed class QuarantineEntry
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime ExpireAt { get; set; } = DateTime.Now.AddDays(30);
     public bool IsDirectory { get; set; }
+    public bool Pending { get; set; }
 }
 
 public sealed class QuarantinePurgeResult
@@ -37,6 +38,9 @@ public sealed class QuarantineService
 
     private static readonly object Lock = new();
     private List<QuarantineEntry>? _entries;
+    private string? _loadedDirectory;
+    internal long ManifestBytesWritten { get; private set; }
+    internal int ManifestWriteCount { get; private set; }
 
     private static readonly JsonSerializerOptions JsonOpt = new()
     {
@@ -53,23 +57,48 @@ public sealed class QuarantineService
 
     private void Load()
     {
-        if (_entries != null) return;
+        if (_entries != null && _loadedDirectory == SettingsService.DataDir) return;
         try
         {
-            _entries = File.Exists(ManifestFile)
-                ? JsonSerializer.Deserialize<List<QuarantineEntry>>(File.ReadAllText(ManifestFile)) ?? new()
-                : new();
+            if (PathUtil.HasReparseAncestor(ManifestFile) || PathUtil.HasReparseAncestor(Dir)) throw new IOException("隔离清单不能是链接");
+            List<QuarantineEntry> entries;
+            if (File.Exists(ManifestFile))
+            {
+                using var stream = File.OpenRead(ManifestFile);
+                entries = JsonSerializer.Deserialize<List<QuarantineEntry>>(stream) ?? new();
+            }
+            else entries = new();
+            // A durable intent without a payload means the move never completed. Never touch its source.
+            entries.RemoveAll(entry => entry.Pending && !PendingPayloadExists(entry));
+            foreach (var entry in entries) entry.Pending = false;
+            _entries = entries;
+            _loadedDirectory = SettingsService.DataDir;
         }
         catch (Exception ex) { throw new InvalidDataException("隔离清单无法读取，已停止操作以保护恢复记录", ex); }
+    }
+
+    private static bool PendingPayloadExists(QuarantineEntry entry)
+    {
+        if (entry.StoredName != entry.Id.ToString("N") + ".bin") throw new InvalidDataException("隔离记录路径无效");
+        var path = Path.Combine(Dir, entry.StoredName);
+        if (PathUtil.IsReparsePoint(path)) throw new InvalidDataException("隔离记录不能引用链接");
+        return File.Exists(path) || Directory.Exists(path);
     }
 
     private void Persist()
     {
         Directory.CreateDirectory(SettingsService.DataDir);
+        if (PathUtil.HasReparseAncestor(ManifestFile)) throw new IOException("隔离清单不能是链接");
         var temporary = ManifestFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            File.WriteAllText(temporary, JsonSerializer.Serialize(_entries, JsonOpt));
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                JsonSerializer.Serialize(stream, _entries, JsonOpt);
+                stream.Flush(flushToDisk: true);
+                ManifestBytesWritten += stream.Length;
+                ManifestWriteCount++;
+            }
             File.Move(temporary, ManifestFile, overwrite: true);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
@@ -78,61 +107,95 @@ public sealed class QuarantineService
     /// <summary>把文件/目录移动到隔离区。返回是否成功。</summary>
     public bool MoveIntoQuarantine(string path, string ruleId, out string? error)
     {
-        error = null;
-        try
+        bool moved = false;
+        string? failure = null;
+        MoveBatchIntoQuarantine(new[] { new CleanItem { Path = path } }, ruleId, CancellationToken.None, null,
+            (_, success, reason) => { moved = success; failure = reason; });
+        error = failure;
+        return moved;
+    }
+
+    internal void MoveBatchIntoQuarantine(IReadOnlyList<CleanItem> items, string ruleId, CancellationToken ct,
+        Func<CleanItem, string?>? validate, Action<CleanItem, bool, string?> report)
+    {
+        if (items.Count > 64) throw new ArgumentOutOfRangeException(nameof(items));
+        lock (Lock)
         {
-            if (!PathUtil.IsLocalPath(path) || PathUtil.HasReparseAncestor(path) || PathUtil.HasReparseAncestor(Dir))
-            { error = "不允许隔离远程路径或目录链接"; return false; }
-            path = Path.GetFullPath(path);
-            if (!File.Exists(path) && !Directory.Exists(path)) { error = CoreLocalizer.T("quar.err.notfound", "文件不存在"); return false; }
-            Directory.CreateDirectory(Dir);
-
-            long size = 0;
-            var isDir = Directory.Exists(path);
-            if (isDir) size = FileUtil.DirSize(path);
-            else size = new FileInfo(path).Length;
-
-            var id = Guid.NewGuid();
-            var storedName = id.ToString("N") + ".bin";
-            var target = Path.Combine(Dir, storedName);
-            lock (Lock)
+            var prepared = new List<(CleanItem Item, QuarantineEntry Entry)>();
+            try
             {
                 Load();
-                var entry = new QuarantineEntry
+                Directory.CreateDirectory(Dir);
+                foreach (var item in items)
                 {
-                    Id = id,
-                    OriginalPath = path,
-                    StoredName = storedName,
-                    Size = size,
-                    RuleId = ruleId,
-                    CreatedAt = DateTime.Now,
-                    ExpireAt = DateTime.Now.AddDays(Math.Max(1, SettingsService.Current.QuarantineDays)),
-                    IsDirectory = isDir,
-                };
-                _entries!.Add(entry);
-                try
-                {
-                    // 先保存恢复记录，再移动文件。断电或磁盘写入失败不会产生无记录的隔离文件。
-                    Persist();
-                    if (isDir) Directory.Move(path, target);
-                    else File.Move(path, target);
+                    ct.ThrowIfCancellationRequested();
+                    try
+                    {
+                        ValidateMove(item, validate);
+                        var isDir = Directory.Exists(item.Path);
+                        var id = Guid.NewGuid();
+                        var entry = new QuarantineEntry
+                        {
+                            Id = id, OriginalPath = Path.GetFullPath(item.Path), StoredName = id.ToString("N") + ".bin",
+                            Size = isDir ? FileUtil.DirSize(item.Path) : new FileInfo(item.Path).Length,
+                            RuleId = ruleId, CreatedAt = DateTime.Now,
+                            ExpireAt = DateTime.Now.AddDays(Math.Max(1, SettingsService.Current.QuarantineDays)),
+                            IsDirectory = isDir, Pending = true,
+                        };
+                        prepared.Add((item, entry));
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException) { report(item, false, ex.Message); }
                 }
+                if (prepared.Count == 0) return;
+                _entries!.AddRange(prepared.Select(p => p.Entry));
+                try { Persist(); } // Atomic, flushed recovery intents for the whole bounded batch, before any move.
                 catch
                 {
-                    _entries.Remove(entry);
-                    try { Persist(); } catch { }
+                    foreach (var (_, entry) in prepared) _entries.Remove(entry);
                     throw;
                 }
             }
-            return true;
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                foreach (var item in prepared.Count > 0 ? prepared.Select(p => p.Item) : items) report(item, false, ex.Message);
+                return;
+            }
+            try
+            {
+                foreach (var (item, entry) in prepared)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    string? error = null;
+                    try
+                    {
+                        ValidateMove(item, validate); // Recheck protection and links immediately before the move.
+                        var target = Path.Combine(Dir, entry.StoredName);
+                        if (entry.IsDirectory) Directory.Move(entry.OriginalPath, target);
+                        else File.Move(entry.OriginalPath, target);
+                        entry.Pending = false;
+                        item.Size = entry.Size;
+                    }
+                    catch (Exception ex) { error = ex.Message; }
+                    report(item, !entry.Pending, error);
+                }
+            }
+            finally
+            {
+                foreach (var (_, entry) in prepared) if (entry.Pending) _entries!.Remove(entry);
+                // If this checkpoint fails, the pre-move intents remain durable and Load reconciles payloads.
+                try { Persist(); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            }
         }
-        catch (Exception ex)
-        {
-            error = ex.Message.Contains("另一个程序正使用") || ex.Message.Contains("being used")
-                ? CoreLocalizer.T("quar.err.locked", "文件被占用")
-                : ex.Message;
-            return false;
-        }
+    }
+
+    private static void ValidateMove(CleanItem item, Func<CleanItem, string?>? validate)
+    {
+        if (!PathUtil.IsLocalPath(item.Path) || PathUtil.HasReparseAncestor(item.Path) || PathUtil.HasReparseAncestor(Dir))
+            throw new IOException("不允许隔离远程路径或目录链接");
+        var deny = validate?.Invoke(item);
+        if (deny != null) throw new IOException(deny);
+        if (!File.Exists(item.Path) && !Directory.Exists(item.Path)) throw new FileNotFoundException("文件不存在");
     }
 
     /// <summary>恢复到原始位置。原目录不存在会自动创建；重名自动加后缀。返回 null=成功，否则错误信息。</summary>

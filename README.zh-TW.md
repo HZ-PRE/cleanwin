@@ -108,7 +108,7 @@ powershell -File scripts\publish.ps1
 - 💚 微信公眾號：微信搜一搜「**馋熊冰**」
 
 <div align="center">
-  <img src="docs/images/wechat-search.png" alt="微信搜一搜：馋熊冰" width="640"/>
+  <img src="docs/images/wechat-search.jpg" alt="微信搜一搜：馋熊冰" width="640"/>
 </div>
 
 ## 📄 開源授權

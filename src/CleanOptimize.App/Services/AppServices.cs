@@ -103,6 +103,12 @@ public static class ScanCache
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
+    internal static void Invalidate()
+    {
+        try { System.IO.File.Delete(File); }
+        catch (Exception ex) { AppLog.Error("ScanCache.Invalidate", ex); }
+    }
+
     public static LastScanSummary? Load()
     {
         try
@@ -128,6 +134,8 @@ public static class ScanCache
 /// <summary>上次磁盘分析摘要缓存。</summary>
 public sealed class DiskSummary
 {
+    /// <summary>Retained large-file results from the last analysis (Top 1000, at least 500 MiB). Null for legacy summaries.</summary>
+    public int? LargeFileCount { get; set; }
     public string Drive { get; set; } = "C:\\";
     public long TotalBytes { get; set; }
     public long UsedBytes { get; set; }
@@ -183,12 +191,18 @@ public static class DiskCache
 /// <summary>自动清理调度：应用运行期间按设置周期在后台执行安全清理。</summary>
 public sealed class AutoCleanScheduler
 {
+    internal bool IsRunning { get; private set; }
     public static AutoCleanScheduler Instance { get; } = new();
     private System.Windows.Threading.DispatcherTimer? _timer;
     private Window? _owner;
+    private CancellationTokenSource? _runCancellation;
+    private readonly Func<CancellationToken, Task<Core.Models.CleanSummary>> _run;
+    internal event Action<Core.Models.CleanSummary>? Completed;
+
+    public AutoCleanScheduler() : this(null) { }
+    internal AutoCleanScheduler(Func<CancellationToken, Task<Core.Models.CleanSummary>>? run) => _run = run ?? RunOnceCoreAsync;
     private static string LastRunFile => Path.Combine(SettingsService.DataDir, "lastautoclean.json");
 
-    public event Action<long, int>? AutoCleanCompleted; // (释放字节, 项目数)
 
     public void Initialize(Window owner)
     {
@@ -206,6 +220,7 @@ public sealed class AutoCleanScheduler
 
     public void Stop()
     {
+        _runCancellation?.Cancel();
         _timer?.Stop();
         _timer = null;
         _owner = null;
@@ -282,23 +297,40 @@ public sealed class AutoCleanScheduler
 
     public async Task CheckAndRunAsync()
     {
+        if (IsRunning || (_owner is MainWindow window && (!window.CanInteract || window.UpdateInProgress || window.HasActiveOperations))) return;
         if (!IsDue()) return;
-        var (bytes, count) = await RunOnceAsync();
-        SaveLastRun();
-        if (bytes > 0)
-        {
-            AutoCleanCompleted?.Invoke(bytes, count);
-        }
+        await RunOnceAsync();
     }
 
     /// <summary>执行一次静默安全清理（仅 L0/L1 默认规则，不含隐私与回收站）。</summary>
-    public async Task<(long bytes, int count)> RunOnceAsync()
+    internal async Task RunOnceAsync()
+    {
+        if (IsRunning || (_owner is MainWindow window && (!window.CanInteract || window.UpdateInProgress || window.HasActiveOperations))) return;
+        IsRunning = true;
+        using var cancellation = new CancellationTokenSource();
+        _runCancellation = cancellation;
+        try
+        {
+            var summary = await _run(cancellation.Token);
+            if (cancellation.IsCancellationRequested || summary.Cancelled) return;
+            SaveLastRun();
+            if (SettingsService.Current.NotifyAutoCleanResult) Completed?.Invoke(summary);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            AppLog.Error("AutoClean", ex);
+            if (!cancellation.IsCancellationRequested && SettingsService.Current.NotifyAutoCleanResult)
+                Completed?.Invoke(new Core.Models.CleanSummary { FailCount = 1 });
+        }
+        finally { _runCancellation = null; IsRunning = false; }
+    }
+
+    private static async Task<Core.Models.CleanSummary> RunOnceCoreAsync(CancellationToken token)
     {
         var scanner = new Core.Rules.ScannerService();
-        var ctx = scanner.BuildContext(CancellationToken.None);
-        var rules = scanner.Rules.Where(r =>
-            r.Group is Core.Models.RuleGroup.SystemJunk or Core.Models.RuleGroup.BrowserCache or Core.Models.RuleGroup.AppCache
-            && r.DefaultSelected).ToList();
+        var ctx = scanner.BuildContext(token);
+        var rules = QuickCleanPlan.SelectRules(scanner.Rules, new QuickCleanRequest());
         var results = await scanner.ScanAsync(rules, ctx, null);
         var svc = new Core.Rules.CleanService();
         var requests = results
@@ -308,15 +340,17 @@ public sealed class AutoCleanScheduler
             {
                 Rule = t.rule,
                 Result = t.res,
-                Selected = t.res.Items.ToList(),
+                Selected = t.res.Items,
             })
             .ToList();
-        if (requests.Count == 0) return (0, 0);
-        var summary = await svc.CleanAsync(requests, CancellationToken.None, null);
+        if (requests.Count == 0) return new Core.Models.CleanSummary { FailCount = results.Count(r => r.Error != null) };
+        var summary = await svc.CleanAsync(requests, token, null);
+        summary.FailCount += results.Count(r => r.Error != null);
         HistoryService.Add("AutoClean",
             string.Format(Loc.T("history.autoclean.title"), Core.Utils.SizeText.OfBytes(summary.FreedBytes)),
             string.Format(Loc.T("history.autoclean.detail"), summary.SuccessCount, summary.SkipCount),
             summary.FreedBytes);
-        return (summary.FreedBytes, summary.SuccessCount + summary.QuarantineCount);
+        ScanCache.Invalidate();
+        return summary;
     }
 }

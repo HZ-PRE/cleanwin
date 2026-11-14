@@ -26,7 +26,6 @@ public sealed class InstalledApp
     public string RegistryKey { get; set; } = "";
     public bool IsSystemComponent { get; set; }
 
-    public string SizeDisplay => EstimatedSize > 0 ? SizeText.OfBytes(EstimatedSize) : "未知";
 }
 
 /// <summary>应用卸载后可能残留的文件目录 / 注册表键。</summary>

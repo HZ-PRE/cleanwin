@@ -36,6 +36,11 @@ internal static class RegressionChecks
                 Apps.AppInventoryService.IsSafeLeftoverToken("ExampleApp"));
             Check("旧配置无法开启上报", !new AppSettings { AnonymousStats = true, CrashReports = true }.AnonymousStats &&
                 !new AppSettings { CrashReports = true }.CrashReports);
+            var legacySettings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(
+                """{"NotifyWeeklyReport":true,"NotifyProductNews":true,"FollowJunctions":true,"AutoCleanIncludeBrowser":false,"LogLevel":"debug","AnonymousStats":true,"CrashReports":true,"Theme":"dark","Whitelist":["C:\\Keep"],"QuarantineDays":14}""")!;
+            Check("移除旧设置仍兼容已有配置并保留隐私与白名单", legacySettings.Theme == "dark" &&
+                legacySettings.QuarantineDays == 14 && legacySettings.Whitelist.SequenceEqual(new[] { @"C:\Keep" }) &&
+                !legacySettings.AnonymousStats && !legacySettings.CrashReports);
             Check("提权注册表使用精确允许列表", ElevatedService.IsAllowedStartupKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run") &&
                 !ElevatedService.IsAllowedStartupKey(@"Software\Microsoft\Windows\CurrentVersion\Policies") &&
                 !ElevatedService.IsAllowedStartupKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\child"));
@@ -109,7 +114,7 @@ internal static class RegressionChecks
             using var cancel = new CancellationTokenSource();
             var cleanRule = new ProbeRule(root, cancel);
             var item = new CleanItem { Path = keep, Size = 4 };
-            var request = new CleanRequestRule { Rule = cleanRule, Result = new RuleResult(), Selected = new() { item } };
+            var request = new CleanRequestRule { Rule = cleanRule, Result = new RuleResult(), Selected = new List<CleanItem> { item } };
             var summary = new CleanService().CleanAsync(new[] { request, request }, cancel.Token, null).GetAwaiter().GetResult();
             Check("规则之间取消仍保留清理汇总", summary.Cancelled && summary.SuccessCount == 1 && summary.FreedBytes == 4);
             Check("取消结果记录到历史", HistoryService.LoadAll().Any(h => h.Type == "CleanCancelled"));
