@@ -1,0 +1,10 @@
+<Window x:Class="CleanOptimize.App.Windows.CleanupIssuesWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:CleanOptimize.App.Controls"
+        Title="{DynamicResource clean.issues.title}" Width="720" Height="500" MinWidth="520" MinHeight="350" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="{DynamicResource CardBgBrush}">
+  <Grid Margin="22">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <TextBlock x:Name="SummaryText" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+    <TextBlock Grid.Row="1" Text="{DynamicResource clean.issues.hint}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,14"/>
+    <controls:VirtualRows x:Name="IssueList" Grid.Row="2"/>
+    <Button Grid.Row="3" Content="{DynamicResource btn.ok}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" Margin="0,16,0,0" IsCancel="True" Click="Close_Click"/>
+  </Grid>
+</Window>

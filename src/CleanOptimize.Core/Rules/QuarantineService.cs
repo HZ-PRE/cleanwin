@@ -144,7 +144,7 @@ public sealed class QuarantineService
                         };
                         prepared.Add((item, entry));
                     }
-                    catch (Exception ex) when (ex is not OperationCanceledException) { report(item, false, ex.Message); }
+                    catch (Exception ex) when (ex is not OperationCanceledException) { report(item, false, CleanFailure.Describe(ex)); }
                 }
                 if (prepared.Count == 0) return;
                 _entries!.AddRange(prepared.Select(p => p.Entry));
@@ -158,7 +158,7 @@ public sealed class QuarantineService
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                foreach (var item in prepared.Count > 0 ? prepared.Select(p => p.Item) : items) report(item, false, ex.Message);
+                foreach (var item in prepared.Count > 0 ? prepared.Select(p => p.Item) : items) report(item, false, CleanFailure.Describe(ex));
                 return;
             }
             try
@@ -176,7 +176,7 @@ public sealed class QuarantineService
                         entry.Pending = false;
                         item.Size = entry.Size;
                     }
-                    catch (Exception ex) { error = ex.Message; }
+                    catch (Exception ex) { error = CleanFailure.Describe(ex); }
                     report(item, !entry.Pending, error);
                 }
             }
@@ -195,7 +195,7 @@ public sealed class QuarantineService
             throw new IOException("不允许隔离远程路径或目录链接");
         var deny = validate?.Invoke(item);
         if (deny != null) throw new IOException(deny);
-        if (!File.Exists(item.Path) && !Directory.Exists(item.Path)) throw new FileNotFoundException("文件不存在");
+        _ = File.GetAttributes(item.Path);
     }
 
     /// <summary>恢复到原始位置。原目录不存在会自动创建；重名自动加后缀。返回 null=成功，否则错误信息。</summary>

@@ -75,8 +75,21 @@
     <sys:String xml:space="preserve" x:Key="clean.empty.group">下の「このグループをスキャン」でチェックを開始</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">削除済み —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} を削除</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">使用中の一時ファイルは後で清掃できます。パスを右クリックでコピーし、下の案内に従って再検査してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">{0} 件が未清掃です。{1} 件の理由を表示します。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">未清掃の理由を見る</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">プライバシー項目は既定で未選択です。選択前に各項目の影響をお読みください：Cookie の削除でログアウトし、履歴の削除は元に戻せません。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">プライバシー項目は削除後に復元できません。影響を理解した上で実行してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">操作権限がありません。管理者として再試行し、失敗が続く場合はファイルを残してください。システム権限の強制変更は避けてください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">フォルダー内に未削除または新規ファイルがあります。関連アプリを閉じて再検査してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">他のプログラムが使用中です。関連アプリを閉じて再試行してください。システム一時ファイルは再起動後に試せます。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">ファイルは削除または移動済みです。再検査で一覧を更新できます。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">操作を完了できませんでした。後で再試行してください。詳細：{0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">パスが長すぎます。用途を確認して手動で処理するか、そのまま残してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">ファイル保護のためスキップしました。パスと許可リストを確認してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">隔離の復元記録を読めないため清掃を停止しました。隔離領域とローカルログを確認してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">ディスク容量が不足しています。空きを確保して削除または隔離を再試行してください。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">具体的な理由は不明です。再検査して再試行し、ローカルログを確認してください。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">空にするとごみ箱のファイルは完全に削除され復元できません。先にごみ箱を開いて確認できます。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">ごみ箱を空にしました（{0} 件）</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">スキャン中 {0}/{1}</sys:String>

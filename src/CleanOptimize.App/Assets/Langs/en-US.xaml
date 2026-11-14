@@ -75,8 +75,21 @@ Continues automatically once finished</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.group">Click “Scan group” below to check this category</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">Deleted —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">Deleted {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">Temporary files are often in use. You can clean them later. Right-click a path to copy it, follow the advice below, then scan again.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">{0} items were not cleaned; showing reasons for {1}.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">View cleanup issues</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">Privacy items are unchecked by default. Read each impact before selecting: clearing cookies signs you out; clearing history cannot be undone.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">Privacy items cannot be restored after cleaning. Make sure you understand the impact.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">Your account lacks permission. Try running as administrator; if it still fails, leave the file and do not force changes to system permissions.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">The folder still contains files, or new files were created. Close related programs, scan again and retry.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">Another program is using this file. Close that program and retry; for system temporary files, try after restarting Windows.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">The file was already deleted or moved. Scan again to refresh the list.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">The system could not complete the operation. Retry later. Technical details: {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">The file path is too long. Review the file before handling it manually, or leave it for now.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">This item was skipped to protect your files. Review its path and whitelist settings.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">Quarantine recovery records cannot be read. Cleanup stopped to protect recovery information. Check quarantine and local logs.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">The disk is full. Free some space before retrying deletion or quarantine.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">No specific reason was provided. Scan again, retry and check the local logs.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">Emptying the Recycle Bin permanently deletes its files. You can also open it to check first.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">Emptied the Recycle Bin ({0} items)</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">Scanning {0}/{1}</sys:String>

@@ -70,6 +70,34 @@ internal static class CleanupOptimizationChecks
             using var held = new FileStream(items[1].Path, FileMode.Open, FileAccess.Read, FileShare.None);
             var summary = RunClean(new ProbeRule(Files), items);
             Require(summary.SuccessCount == 1 && summary.SkipCount == 1 && summary.FreedBytes == 11 && File.Exists(items[1].Path));
+            Require(summary.Details.Single(i => i.Status == CleanItemStatus.SkippedLocked).Note == CleanFailure.Describe(new IOException("locked", unchecked((int)0x80070020))));
+        });
+        Check("清理错误区分占用、权限、空间、长路径、消失及未知原因", () =>
+        {
+            var translate = CoreLocalizer.Translate;
+            try
+            {
+                CoreLocalizer.Translate = (key, _) => key == "clean.reason.other" ? key + ":{0}" : key;
+                foreach (var (code, reason) in new[] { (32, "locked"), (33, "locked"), (5, "denied"), (2, "missing"), (3, "missing"), (39, "space"), (112, "space"), (206, "path"), (145, "directory") })
+                {
+                    var error = new IOException("test", unchecked((int)0x80070000) | code);
+                    Require(CleanFailure.IsLocked(error) == (code is 32 or 33));
+                    Require(CleanFailure.Describe(error) == "clean.reason." + reason);
+                }
+                Require(CleanFailure.Describe(new UnauthorizedAccessException()) == "clean.reason.denied");
+                Require(CleanFailure.Describe(new IOException("device unavailable")) == "clean.reason.other:device unavailable");
+                Require(CleanFailure.Describe(new InvalidDataException("隔离记录无法读取")) == "clean.reason.quarantine");
+            }
+            finally { CoreLocalizer.Translate = translate; }
+        });
+        Check("隔离占用文件返回可读原因并保留源文件和恢复清单", () =>
+        {
+            var items = MakeFiles(1);
+            using var held = new FileStream(items[0].Path, FileMode.Open, FileAccess.Read, FileShare.None);
+            var summary = RunClean(new ProbeRule(Files), items);
+            Require(summary.FailCount == 1 && summary.FreedBytes == 0 && summary.QuarantineCount == 0 && File.Exists(items[0].Path));
+            Require(summary.Details.Single().Note == CleanFailure.Describe(new IOException("locked", unchecked((int)0x80070020))));
+            Require(new QuarantineService().Entries.Count == 0);
         });
         Check("目录部分删除只统计成功删除的字节", () =>
         {
@@ -78,6 +106,7 @@ internal static class CleanupOptimizationChecks
             using var held = new FileStream(items[1].Path, FileMode.Open, FileAccess.Read, FileShare.None);
             var summary = RunClean(new ProbeRule(SettingsService.DataDir), new[] { new CleanItem { Path = Files, Size = 999, IsDirectory = true } });
             Require(summary.FailCount == 1 && summary.FreedBytes == 1 && File.Exists(items[1].Path) && !File.Exists(items[0].Path));
+            Require(summary.Details.Single().Note.Contains(items[1].Path) && summary.Details.Single().Note.Contains(CleanFailure.Describe(new IOException("locked", unchecked((int)0x80070020)))));
         });
         Check("两万项清理明细有界、异常剩余项计数和进度终值准确", () =>
         {
@@ -86,6 +115,7 @@ internal static class CleanupOptimizationChecks
             var summary = RunClean(new SimulatedRule(null), items, progress: new InlineProgress<CleanProgress>(updates.Add));
             Require(summary.SuccessCount == 5000 && summary.FailCount == 15000 && summary.FreedBytes == 5000);
             Require(summary.Details.Count == 1000 && summary.OmittedDetailCount == 19000);
+            Require(summary.Details.All(i => i.Status == CleanItemStatus.Failed && i.Note.Contains("simulated failure")));
             Require(updates.Count < 100 && updates.Last().Processed == 20000 && updates.Last().Total == 20000 && updates.Last().FreedBytes == 5000);
             Require(updates.Zip(updates.Skip(1)).All(p => p.First.Processed <= p.Second.Processed));
         });

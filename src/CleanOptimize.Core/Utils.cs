@@ -187,14 +187,14 @@ public static class FileUtil
     {
         try
         {
-            if (!File.Exists(path)) return (true, DeleteFailReason.None, "");
             File.SetAttributes(path, FileAttributes.Normal);
             File.Delete(path);
             return (true, DeleteFailReason.None, "");
         }
-        catch (UnauthorizedAccessException) { return (false, DeleteFailReason.Denied, CleanOptimize.Core.Store.CoreLocalizer.T("del.err.denied", "权限不足")); }
-        catch (IOException) { return (false, DeleteFailReason.Locked, CleanOptimize.Core.Store.CoreLocalizer.T("del.err.locked", "文件被占用")); }
-        catch (Exception ex) { return (false, DeleteFailReason.Other, ex.Message); }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return (true, DeleteFailReason.None, ""); }
+        catch (UnauthorizedAccessException ex) { return (false, DeleteFailReason.Denied, CleanFailure.Describe(ex)); }
+        catch (IOException ex) { return (false, CleanFailure.IsLocked(ex) ? DeleteFailReason.Locked : DeleteFailReason.Other, CleanFailure.Describe(ex)); }
+        catch (Exception ex) { return (false, DeleteFailReason.Other, CleanFailure.Describe(ex)); }
     }
 
     /// <summary>兼容入口：只需文本原因的调用方使用。</summary>
@@ -217,7 +217,7 @@ public static class FileUtil
             if (PathUtil.IsReparsePoint(dir))
             {
                 try { Directory.Delete(dir, false); ok++; }
-                catch { fail++; onItemFailed?.Invoke(dir, CleanOptimize.Core.Store.CoreLocalizer.T("del.err.link", "无法删除链接")); }
+                catch (Exception ex) { fail++; onItemFailed?.Invoke(dir, CleanFailure.Describe(ex)); }
                 return (ok, fail, freed);
             }
 
@@ -240,24 +240,31 @@ public static class FileUtil
                     {
                         long size = 0;
                         try { size = new FileInfo(entry).Length; } catch { }
-                        var (good, _) = DeleteFile(entry);
+                        var (good, reason) = DeleteFile(entry);
                         if (good) { ok++; freed += size; }
-                        else { fail++; onItemFailed?.Invoke(entry, ""); }
+                        else { fail++; onItemFailed?.Invoke(entry, reason); }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
                     fail++;
-                    onItemFailed?.Invoke(entry, "");
+                    onItemFailed?.Invoke(entry, CleanFailure.Describe(ex));
                 }
             }
 
             try { Directory.Delete(dir, false); }
-            catch { }
+            catch (DirectoryNotFoundException) { }
+            catch (Exception ex)
+            {
+                // Child failures already explain why this directory remains. Report an
+                // independent final-delete failure when no child failure was recorded.
+                if (fail == 0) { fail++; onItemFailed?.Invoke(dir, CleanFailure.Describe(ex)); }
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             fail++;
+            onItemFailed?.Invoke(dir, CleanFailure.Describe(ex));
         }
         return (ok, fail, freed);
     }

@@ -114,7 +114,7 @@ public abstract class RegistryPrivacyRule : RuleBase
             }
             catch (Exception ex)
             {
-                foreach (var item in ctx.Selected) ctx.Report(item, CleanItemStatus.Failed, ex.Message);
+                foreach (var item in ctx.Selected) ctx.Report(item, CleanItemStatus.Failed, CleanFailure.Describe(ex));
             }
         }, ctx.Ct);
     }
@@ -191,7 +191,7 @@ public sealed class DnsCacheRule : RuleBase
             }
             catch (Exception ex)
             {
-                foreach (var item in ctx.Selected) ctx.Report(item, CleanItemStatus.Failed, ex.Message);
+                foreach (var item in ctx.Selected) ctx.Report(item, CleanItemStatus.Failed, CleanFailure.Describe(ex));
             }
         }, ctx.Ct);
     }

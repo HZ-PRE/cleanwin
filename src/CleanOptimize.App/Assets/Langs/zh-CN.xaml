@@ -75,8 +75,21 @@
     <sys:String xml:space="preserve" x:Key="clean.empty.group">点击下方「扫描本组」开始检查这一类项目</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">已删除 —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">已删除 {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">临时文件被正在运行的程序占用很常见，可以稍后再清理。右键文件路径可复制；按下面的建议处理后，请重新扫描再试。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">有 {0} 项未清理，显示其中 {1} 项原因。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">查看未清理原因</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">隐私项默认全部不勾选。勾选前请阅读每项的影响说明：清理 Cookie 会使网站退出登录，清理历史记录后不可恢复。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">隐私项清理后无法恢复，请确认已了解各项影响。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">当前账户没有操作此文件的权限。可以尝试以管理员身份运行后重试；仍失败时请保留此文件，不要强行修改系统权限。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">文件夹中仍有未能删除的文件，或程序又生成了新文件。请关闭相关程序，重新扫描后再试。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">文件正在被其他程序使用，暂时无法清理。请关闭相关程序后重试；系统临时文件可在重启后再试。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">文件已被其他程序删除或移动，无需再次清理。重新扫描即可更新列表。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">系统未能完成操作，请稍后重试。技术信息：{0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">文件路径过长，当前操作无法处理。请在确认文件用途后手动处理，或暂时保留。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">为保护您的文件，软件跳过了此项目。请先核对文件路径和白名单。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">隔离区恢复记录无法读取。为避免丢失恢复信息，已停止清理；请先检查隔离区和本地日志。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">磁盘剩余空间不足，无法完成删除或移入隔离区。请先释放一些磁盘空间，再重试。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">系统没有提供更具体的原因。请重新扫描后重试，并查看本地日志中的相关记录。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">清空后回收站中的文件将被永久删除、无法恢复。也可以先打开回收站检查一遍。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">清空了回收站（{0} 个项目）</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">正在扫描 {0}/{1}</sys:String>

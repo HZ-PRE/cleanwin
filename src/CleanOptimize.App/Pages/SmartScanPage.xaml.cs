@@ -24,6 +24,7 @@ public partial class SmartScanPage : Page, IParamPage
     private bool _cleaning;
     private bool _confirming;
     private QuickCleanRequest? _quickRequest;
+    private CleanupIssueReport? _issues;
     internal bool OperationActive => _scanning || _cleaning || _confirming;
 
     public SmartScanPage(MainWindow main)
@@ -757,6 +758,9 @@ public partial class SmartScanPage : Page, IParamPage
 
     internal void ApplyCleanOutcome(CleanSummary summary)
     {
+        _issues = new CleanupIssueReport(summary);
+        DoneIssueText.Text = _issues.Total > 0 ? _issues.Summary + "\n" + (_issues.Items.Length > 0 ? CleanupIssueReport.Reason(_issues.Items[0]) : Loc.T("clean.reason.unknown")) : "";
+        DoneIssueText.Visibility = BtnCleanupIssues.Visibility = _issues.Total > 0 ? Visibility.Visible : Visibility.Collapsed;
         DoneTitleText.Text = summary.Cancelled ? Services.Loc.T("done.cancelled") : summary.FailCount == 0 && summary.SkipCount == 0 ? Services.Loc.T("done.title") : Services.Loc.T("done.partial");
         DoneFreedText.Text = string.Format(Services.Loc.T("done.freed.total"), SizeText.OfBytes(summary.FreedBytes));
         DoneOkText.Text = summary.SuccessCount.ToString();
@@ -768,6 +772,8 @@ public partial class SmartScanPage : Page, IParamPage
               string.Format(Services.Loc.T("done.note.quarantine"), SettingsService.Current.QuarantineDays)
             : Services.Loc.T("done.note.skip");
     }
+
+    private void CleanupIssues_Click(object sender, RoutedEventArgs e) => _issues?.Show(_main);
 
     private void Show(UIElement panel)
     {

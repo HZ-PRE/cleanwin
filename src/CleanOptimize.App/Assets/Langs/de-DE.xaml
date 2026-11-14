@@ -75,8 +75,21 @@ Fährt automatisch fort, wenn fertig</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.group">Klicke unten auf „Gruppe scannen“, um diese Kategorie zu prüfen</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">Gelöscht —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} gelöscht</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">Temporäre Dateien sind oft in Verwendung. Pfad per Rechtsklick kopieren, Hinweise beachten und erneut prüfen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">{0} Elemente nicht bereinigt; Gründe für {1} werden angezeigt.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">Bereinigungsprobleme ansehen</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">Datenschutz-Elemente sind standardmäßig abgewählt. Lies jede Auswirkung: Cookies löschen meldet dich ab; gelöschter Verlauf ist unwiederbringlich.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">Datenschutz-Elemente können nach der Bereinigung nicht wiederhergestellt werden.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">Berechtigung fehlt. Als Administrator versuchen; bei erneutem Fehler Datei belassen und Systemrechte nicht erzwingen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">Der Ordner enthält noch oder erneut Dateien. Zugehörige Programme schließen und erneut prüfen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">Eine andere Anwendung verwendet die Datei. Anwendung schließen und erneut versuchen; Systemdateien ggf. nach einem Windows-Neustart bereinigen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">Die Datei wurde bereits gelöscht oder verschoben. Liste durch erneute Prüfung aktualisieren.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">Vorgang fehlgeschlagen. Später erneut versuchen. Technische Details: {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">Dateipfad zu lang. Dateizweck vor manueller Bearbeitung prüfen oder Datei belassen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">Zum Schutz Ihrer Dateien übersprungen. Pfad und Ausnahmeliste prüfen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">Quarantäne-Wiederherstellungsdaten nicht lesbar. Bereinigung zum Schutz gestoppt. Quarantäne und lokale Protokolle prüfen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">Datenträger voll. Speicher freigeben und Löschen oder Quarantäne erneut versuchen.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">Kein genauer Grund angegeben. Erneut prüfen und lokale Protokolle ansehen.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">Beim Leeren des Papierkorbs werden die Dateien endgültig gelöscht. Du kannst ihn vorher öffnen und prüfen.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">Papierkorb geleert ({0} Elemente)</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">Scanne {0}/{1}</sys:String>

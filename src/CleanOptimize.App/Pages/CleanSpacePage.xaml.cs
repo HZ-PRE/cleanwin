@@ -15,6 +15,7 @@ public partial class CleanSpacePage : Page, IParamPage
     internal int SelectedTab => _tab;
     private CancellationTokenSource? _scanCts;
     private bool _mutating;
+    private Services.CleanupIssueReport? _issues;
     internal bool OperationActive => _scanCts != null || _mutating;
 
     /// <summary>tab -> 已扫描的行。</summary>
@@ -209,10 +210,12 @@ public partial class CleanSpacePage : Page, IParamPage
                 Selected = r.Res.Items,
             }).ToList();
             var summary = await svc.CleanAsync(requests, CancellationToken.None, null);
+            ApplyCleanOutcome(summary);
             _main.ShowToast(string.Format(Services.Loc.T("toast.cleandone"), SizeText.OfBytes(summary.FreedBytes)) +
                             (summary.QuarantineCount > 0 ? "\n" + string.Format(Services.Loc.T("ui.clean.quarantined"), SizeText.OfBytes(summary.QuarantinedBytes)) : "") +
-                            (summary.SkipCount > 0 ? string.Format(Services.Loc.T("toast.skipped"), summary.SkipCount) : ""),
-                            summary.FailCount > 0 ? ToastType.Warning : ToastType.Success);
+                            (_issues is { Total: > 0 } ? "\n" + _issues.Summary : ""),
+                            summary.FailCount > 0 || summary.SkipCount > 0 ? ToastType.Warning : ToastType.Success);
+            _issues?.Show(_main);
             _tabRows.Remove(_tab);
             _tabResults.Remove(_tab);
             await ScanGroupAsync(_tab);
@@ -227,6 +230,15 @@ public partial class CleanSpacePage : Page, IParamPage
             _mutating = false;
         }
     }
+
+    internal void ApplyCleanOutcome(CleanSummary summary)
+    {
+        _issues = new Services.CleanupIssueReport(summary);
+        CleanupIssueText.Text = _issues.Total > 0 ? _issues.Summary : "";
+        CleanupIssueText.Visibility = BtnCleanupIssues.Visibility = _issues.Total > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void CleanupIssues_Click(object sender, RoutedEventArgs e) => _issues?.Show(_main);
 
     private async Task RefreshRecycleAsync()
     {

@@ -75,8 +75,21 @@ Reprise automatique une fois terminée</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.group">Cliquez sur « Analyser ce groupe » ci-dessous</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">Supprimés —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} supprimés</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">Les fichiers temporaires sont souvent utilisés. Copiez le chemin par clic droit, suivez les conseils puis relancez l’analyse.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">{0} éléments non nettoyés ; motifs affichés pour {1}.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">Voir les problèmes de nettoyage</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">Les éléments de confidentialité sont décochés par défaut. Lisez chaque impact : effacer les cookies déconnecte les sites ; l'historique effacé est irrécupérable.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">Les éléments de confidentialité ne peuvent pas être restaurés après nettoyage.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">Droits insuffisants. Essayez en administrateur ; si l’échec persiste, conservez le fichier sans forcer les autorisations système.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">Le dossier contient encore des fichiers, éventuellement nouveaux. Fermez les programmes concernés et relancez l’analyse.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">Un autre programme utilise ce fichier. Fermez-le puis réessayez, ou redémarrez Windows pour les fichiers système temporaires.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">Le fichier a été supprimé ou déplacé. Relancez l’analyse pour actualiser la liste.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">Opération impossible. Réessayez plus tard. Détails techniques : {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">Chemin trop long. Vérifiez l’usage du fichier avant de le traiter manuellement, ou conservez-le.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">Élément ignoré pour protéger vos fichiers. Vérifiez son chemin et la liste blanche.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">Les données de restauration sont illisibles. Nettoyage arrêté pour les protéger. Vérifiez la quarantaine et les journaux locaux.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">Disque plein. Libérez de l’espace avant de réessayer la suppression ou la mise en quarantaine.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">Aucun motif précis fourni. Relancez l’analyse et consultez les journaux locaux.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">Vider la corbeille supprime définitivement son contenu. Vous pouvez d'abord l'ouvrir pour vérifier.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">Corbeille vidée ({0} éléments)</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">Analyse {0}/{1}</sys:String>

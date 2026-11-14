@@ -75,8 +75,21 @@ Continúa automáticamente al terminar</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.empty.group">Pulsa «Escanear grupo» abajo para revisar esta categoría</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">Eliminados —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">{0} eliminados</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">Los temporales suelen estar en uso. Copia la ruta con clic derecho, sigue los consejos y vuelve a analizar.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">{0} elementos sin limpiar; se muestran motivos de {1}.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">Ver problemas de limpieza</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">Los elementos de privacidad están desmarcados por defecto. Lee cada impacto: limpiar cookies cierra sesiones; el historial borrado no se recupera.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">Los elementos de privacidad no se pueden restaurar tras la limpieza.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">Faltan permisos. Prueba como administrador; si falla, conserva el archivo sin forzar permisos del sistema.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">Quedan archivos o se crearon otros nuevos. Cierra los programas relacionados y vuelve a analizar.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">Otro programa usa el archivo. Ciérralo y reintenta; para temporales del sistema, prueba tras reiniciar Windows.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">El archivo ya se eliminó o movió. Vuelve a analizar para actualizar la lista.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">No se completó la operación. Reintenta más tarde. Información técnica: {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">La ruta es demasiado larga. Revisa el archivo antes de tratarlo manualmente o consérvalo.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">Se omitió para proteger tus archivos. Revisa la ruta y la lista blanca.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">No se leen los registros de restauración. Se detuvo la limpieza para protegerlos. Revisa la cuarentena y los registros locales.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">Disco lleno. Libera espacio antes de volver a eliminar o poner en cuarentena.</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">No se proporcionó un motivo específico. Vuelve a analizar y consulta los registros locales.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">Al vaciarla, los archivos se eliminan definitivamente. Puedes abrir la papelera para revisarla antes.</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">Papelera vaciada ({0} elementos)</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">Escaneando {0}/{1}</sys:String>

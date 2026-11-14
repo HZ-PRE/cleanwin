@@ -75,8 +75,21 @@
     <sys:String xml:space="preserve" x:Key="clean.empty.group">點擊下方「掃描此分類」開始檢查這一類項目</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed">已刪除 —</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.freed.f">已刪除 {0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.hint">暫存檔被執行中的程式佔用很常見，可稍後再清理。右鍵路徑可複製；處理後請重新掃描。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.summary">有 {0} 項未清理，顯示其中 {1} 項原因。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.issues.title">查看未清理原因</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.banner">隱私項預設全部不勾選。勾選前請閱讀每項的影響說明：清理 Cookie 會使網站登出，清理歷史記錄後不可復原。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.privacy.warn">隱私項清理後無法復原，請確認已了解各項影響。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.denied">目前帳戶沒有操作權限。可嘗試以管理員身分執行；仍失敗請保留檔案，不要強行修改系統權限。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.directory">資料夾仍有無法刪除的檔案，或程式又產生新檔案。請關閉相關程式並重新掃描。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.locked">檔案正被其他程式使用。請關閉相關程式後重試；系統暫存檔可於重新啟動後再試。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.missing">檔案已被其他程式刪除或移動，無需再清理。重新掃描即可更新清單。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.other">系統無法完成操作，請稍後重試。技術資訊：{0}</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.path">檔案路徑過長。請確認用途後手動處理，或暫時保留。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.protected">為保護您的檔案，已略過此項。請先核對路徑和白名單。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.quarantine">隔離區還原記錄無法讀取，已停止清理以保護記錄。請檢查隔離區和本機日誌。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.space">磁碟空間不足，無法完成刪除或移入隔離區。請先釋放空間再重試。</sys:String>
+    <sys:String xml:space="preserve" x:Key="clean.reason.unknown">系統未提供具體原因。請重新掃描後重試，並查看本機日誌。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recycle.desc">清空後資源回收筒中的檔案將被永久刪除、無法復原。也可以先開啟資源回收筒檢查一遍。</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.recyclebin.cleared">清空了回收站（{0} 个项目）</sys:String>
     <sys:String xml:space="preserve" x:Key="clean.scan.detail">正在扫描 {0}/{1}</sys:String>

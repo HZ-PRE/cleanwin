@@ -83,10 +83,6 @@ public abstract class RuleBase : IScanRule
                 {
                     ctx.Report(item, CleanItemStatus.SkippedWhitelist, deny);
                 }
-                else if (!File.Exists(item.Path) && !Directory.Exists(item.Path))
-                {
-                    ctx.Report(item, CleanItemStatus.NotFound, "");
-                }
                 else if (ctx.UseQuarantine)
                 {
                     batch.Add(item);
@@ -94,17 +90,22 @@ public abstract class RuleBase : IScanRule
                 }
                 else if (item.IsDirectory)
                 {
-                    var (ok, fail, bytes) = FileUtil.DeleteDirectoryTree(item.Path);
+                    string? firstFailure = null;
+                    var (ok, fail, bytes) = FileUtil.DeleteDirectoryTree(item.Path, (path, reason) => firstFailure ??= path + "\n" + reason);
                     item.Size = bytes;
                     item.DeletedBytes = bytes;
                     ctx.Report(item, fail == 0 ? CleanItemStatus.Success : CleanItemStatus.Failed,
-                        fail > 0 ? string.Format(Store.CoreLocalizer.T("clean.skip.subitems", "{0} 个子项被跳过"), fail) : "");
+                        fail > 0 ? string.Format(Store.CoreLocalizer.T("clean.skip.subitems", "{0} 个子项被跳过"), fail) + "\n" + firstFailure : "");
                 }
                 else
                 {
                     // Refresh the logical length: a cache file may have changed since scanning.
                     try { item.Size = new FileInfo(item.Path).Length; }
-                    catch (Exception ex) { ctx.Report(item, CleanItemStatus.Failed, ex.Message); continue; }
+                    catch (Exception ex)
+                    {
+                        ctx.Report(item, ex is FileNotFoundException or DirectoryNotFoundException ? CleanItemStatus.NotFound : CleanItemStatus.Failed, CleanFailure.Describe(ex));
+                        continue;
+                    }
                     var (ok, kind, reason) = FileUtil.DeleteFileEx(item.Path);
                     ctx.Report(item, ok ? CleanItemStatus.Success
                         : kind == FileUtil.DeleteFailReason.Locked ? CleanItemStatus.SkippedLocked

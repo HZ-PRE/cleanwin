@@ -28,6 +28,7 @@ public sealed class CleanService
         string path = "", ruleName = "";
         var clock = Stopwatch.StartNew();
         long lastReport = -100;
+        var successfulSlots = new Queue<int>();
         void Notify(bool force = false)
         {
             if (progress == null || (!force && clock.ElapsedMilliseconds - lastReport < 100)) return;
@@ -58,9 +59,18 @@ public sealed class CleanService
                     case CleanItemStatus.Failed: summary.FailCount++; break;
                     default: summary.SkipCount++; break;
                 }
+                bool success = status is CleanItemStatus.Success or CleanItemStatus.Quarantined;
                 if (summary.Details.Count < DetailLimit)
+                {
+                    if (success) successfulSlots.Enqueue(summary.Details.Count);
                     summary.Details.Add(new CleanItemOutcome { Path = item.Path, Status = status, Size = item.Size, Note = note });
-                else summary.OmittedDetailCount++;
+                }
+                else
+                {
+                    if (!success && successfulSlots.TryDequeue(out int slot))
+                        summary.Details[slot] = new CleanItemOutcome { Path = item.Path, Status = status, Size = item.Size, Note = note };
+                    summary.OmittedDetailCount++;
+                }
                 Notify();
             }
             var context = new CleanContext
@@ -75,7 +85,7 @@ public sealed class CleanService
             {
                 // A bit per selected item replaces an ever-growing path set and the old quadratic lookup.
                 for (int i = 0; i < items.Count; i++)
-                    if (!reported[i]) Report(items[i], CleanItemStatus.Failed, ex.Message);
+                    if (!reported[i]) Report(items[i], CleanItemStatus.Failed, CleanFailure.Describe(ex));
             }
         }
         if (ct.IsCancellationRequested) summary.Cancelled = true;

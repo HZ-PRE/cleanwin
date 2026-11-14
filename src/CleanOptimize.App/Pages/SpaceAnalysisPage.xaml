@@ -122,15 +122,23 @@
           <WrapPanel Grid.Row="1" x:Name="TypeFilterHost" Margin="6,0,6,10" Grid.ColumnSpan="2"/>
           <controls:VirtualRows xmlns:controls="clr-namespace:CleanOptimize.App.Controls" x:Name="LargeList" Grid.Row="2" SelectionChanged="LargeList_SelectionChanged" Margin="0,0,14,0"/>
           <TextBlock x:Name="LargeEmptyText" Text="{DynamicResource space.empty}" FontSize="12.5" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2"/>
-          <Border Grid.Row="2" Grid.Column="1" Background="{DynamicResource SidebarBgBrush}" CornerRadius="8" Padding="16" VerticalAlignment="Top">
-            <StackPanel>
+          <Border Grid.Row="2" Grid.Column="1" Background="{DynamicResource SidebarBgBrush}" CornerRadius="8" Padding="16">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <ScrollViewer x:Name="FileDetailScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
  <TextBlock x:Name="FileDetailName" Text="{DynamicResource ui.select.file}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"/>
  <TextBlock x:Name="FileDetailMeta" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,14,0,0" TextWrapping="Wrap"/>
- <StackPanel x:Name="FileActions" IsEnabled="False" Margin="0,14,0,0">
+                </StackPanel>
+              </ScrollViewer>
+ <StackPanel x:Name="FileActions" Grid.Row="1" IsEnabled="False" Margin="0,14,0,0">
  <Button Content="{DynamicResource ctx.openloc}" Style="{StaticResource SecondaryButton}" Click="FileOpen_Click"/>
  <Button Content="{DynamicResource space.addwhitelist}" Style="{StaticResource SecondaryButton}" Margin="0,8,0,0" Click="FileWhitelist_Click"/>
- <Button Content="{DynamicResource btn.recycle}" Style="{StaticResource DangerGhostButton}" Margin="0,8,0,0" Click="FileRecycle_Click"/>
- </StackPanel></StackPanel>
+ <Button x:Name="BtnFileRecycle" Content="{DynamicResource btn.recycle}" Style="{StaticResource DangerGhostButton}" Margin="0,8,0,0" Click="FileRecycle_Click"/>
+ </StackPanel></Grid>
           </Border>
         </Grid>
       </Border>

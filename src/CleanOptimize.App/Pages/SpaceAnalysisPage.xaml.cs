@@ -453,6 +453,9 @@ public partial class SpaceAnalysisPage : Page, IParamPage
         FileActions.IsEnabled = file != null;
         FileDetailName.Text = file == null ? Loc.T("ui.select.file") : Path.GetFileName(file.Path);
         FileDetailMeta.Text = file == null ? "" : $"{SizeText.OfBytes(file.Size)}\n\n{file.ModifiedTime:yyyy-MM-dd HH:mm}\n\n{file.Path}";
+        FileDetailName.ToolTip = file == null ? null : Path.GetFileName(file.Path);
+        FileDetailMeta.ToolTip = file?.Path;
+        FileDetailScroll.ScrollToTop();
     }
     private void FileOpen_Click(object sender, RoutedEventArgs e)
     {
