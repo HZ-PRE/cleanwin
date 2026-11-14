@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Windows;
 using CleanOptimize.Core.Store;
+using CleanOptimize.App.Controls;
 
 namespace CleanOptimize.App.Services;
 
@@ -9,7 +10,7 @@ public sealed class NotifyIconService : IDisposable
 {
     private readonly MainWindow _main;
     private System.Windows.Forms.NotifyIcon? _icon;
-    private System.Windows.Forms.ContextMenuStrip? _menu;
+    private TrayMenu? _menu;
     private bool _disposed;
 
     public NotifyIconService(MainWindow main)
@@ -35,6 +36,7 @@ public sealed class NotifyIconService : IDisposable
         _icon.DoubleClick += (s, e) => OpenMainWindow();
 
         Loc.LanguageChanged += RebuildOnLanguageChanged;
+        ThemeManager.ThemeChanged += RefreshTheme;
         AutoCleanScheduler.Instance.Completed += ShowAutoCleanResult;
     }
 
@@ -64,23 +66,21 @@ public sealed class NotifyIconService : IDisposable
     private void BuildMenu()
     {
         var old = _menu;
-        var menu = new System.Windows.Forms.ContextMenuStrip();
-        menu.Items.Add(Loc.T("tray.open"), null, (s, e) => OpenMainWindow());
-        menu.Items.Add(Loc.T("tray.quickscan"), null, (s, e) =>
+        var menu = new TrayMenu();
+        menu.AddAction(Loc.T("tray.open"), TrayAction.Open, (s, e) => OpenMainWindow());
+        menu.AddAction(Loc.T("tray.quickscan"), TrayAction.Scan, (s, e) =>
         {
             if (!OpenMainWindow()) return;
             _main.Navigate(PageKey.SmartScan);
             if (_main.PageHost.Content is Pages.SmartScanPage p) p.StartScanFromUi();
         });
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-        menu.Items.Add(Loc.T("ui.quick.title"), null, (_, _) =>
+        menu.AddAction(Loc.T("ui.quick.title"), TrayAction.QuickClean, (_, _) =>
         {
             if (OpenMainWindow()) QuickCleanPlan.Open(_main);
         });
-        var autoItem = new System.Windows.Forms.ToolStripMenuItem(AutoCleanText())
-        {
-            Checked = SettingsService.Current.AutoCleanEnabled,
-        };
+        var autoItem = menu.AddAction(AutoCleanText(), TrayAction.AutoClean, null);
+        autoItem.Checked = SettingsService.Current.AutoCleanEnabled;
         autoItem.Click += (s, e) =>
         {
             if (_disposed || !_main.CanInteract) return;
@@ -89,9 +89,13 @@ public sealed class NotifyIconService : IDisposable
             autoItem.Text = AutoCleanText();
             SettingsService.Save();
         };
-        menu.Items.Add(autoItem);
+        menu.Opening += (_, _) =>
+        {
+            autoItem.Checked = SettingsService.Current.AutoCleanEnabled;
+            autoItem.Text = AutoCleanText();
+        };
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-        menu.Items.Add(Loc.T("tray.exit"), null, (s, e) => _main.ForceClose());
+        menu.AddAction(Loc.T("tray.exit"), TrayAction.Exit, (s, e) => _main.ForceClose());
 
         _menu = menu;
         if (_icon != null) _icon.ContextMenuStrip = menu;
@@ -106,6 +110,8 @@ public sealed class NotifyIconService : IDisposable
         BuildMenu();
     }
 
+    private void RefreshTheme() => _menu?.ApplyTheme();
+
     internal static string AutoCleanText() =>
         Loc.T("tray.autoclean") + (SettingsService.Current.AutoCleanEnabled ? Loc.T("tray.on") : Loc.T("tray.off"));
 
@@ -115,6 +121,7 @@ public sealed class NotifyIconService : IDisposable
         _disposed = true;
         _main.Closed -= MainClosed;
         Loc.LanguageChanged -= RebuildOnLanguageChanged;
+        ThemeManager.ThemeChanged -= RefreshTheme;
         AutoCleanScheduler.Instance.Completed -= ShowAutoCleanResult;
         if (_icon != null)
         {

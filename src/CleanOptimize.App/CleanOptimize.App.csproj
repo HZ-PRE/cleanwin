@@ -11,7 +11,7 @@
     <AssemblyName>CleanOptimize</AssemblyName>
     <RootNamespace>CleanOptimize.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <Product>清理优化大师</Product>
     <Company>CleanOptimize</Company>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>

@@ -25,6 +25,7 @@ internal static class AppSelfTest
         }
         Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         Loc.SetLanguage("zh-CN");
+        Check("托盘八语言双主题布局、自动清理状态同步与菜单释放", TrayMenuTests.Verify);
         Check("未清理明细八语言双主题、计数、千条虚拟化和状态重置", CleanupIssueTests.FailureDetails);
         Check("空间分析长名称长路径保持回收按钮可见及详情滚动", CleanupIssueTests.LongFileActions);
         Check("更新版本、公开安装资产和请求数据边界", UpdateServiceTests.VersionsAndRequest);
