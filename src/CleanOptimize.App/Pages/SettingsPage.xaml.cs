@@ -406,7 +406,7 @@ public partial class SettingsPage : Page
 
     private void BtnCheckUpdate_Click(object sender, RoutedEventArgs e)
     {
-        _ = _main.CheckForUpdatesAsync();
+        _ = _main.CheckForUpdatesAsync(forceRefresh: true);
     }
 
     private void UpdateAvailable_Click(object sender, RoutedEventArgs e) => _main.ShowUpdateDialog();
@@ -421,6 +421,7 @@ public partial class SettingsPage : Page
         {
             UpdateOutcome.Current => "update.latest",
             UpdateOutcome.NoRelease => "ui.update.no.release",
+            UpdateOutcome.IncompleteRelease => "ui.update.incomplete",
             UpdateOutcome.Failed => "update.failed",
             _ => null,
         };

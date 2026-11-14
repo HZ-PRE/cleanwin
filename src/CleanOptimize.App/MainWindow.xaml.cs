@@ -22,7 +22,7 @@ public partial class MainWindow : Window
     private bool _isClosing;
     internal bool IsClosed { get; private set; }
     internal bool CanInteract => !IsClosed && !_isClosing && !Dispatcher.HasShutdownStarted;
-    private readonly Services.UpdateService _updates = new();
+    private readonly Services.UpdateService _updates;
     private readonly CancellationTokenSource _updateCancellation = new();
     private Task? _updateTask;
     internal Services.UpdateResult UpdateState { get; private set; } = new(Services.UpdateOutcome.NotChecked);
@@ -43,8 +43,11 @@ public partial class MainWindow : Window
     public PageKey? InitialPage { get; set; }
     public object? InitialParam { get; set; }
 
-    public MainWindow()
+    public MainWindow() : this(new Services.UpdateService()) { }
+
+    internal MainWindow(Services.UpdateService updates)
     {
+        _updates = updates;
         InitializeComponent();
         var v = System.Reflection.Assembly.GetEntryAssembly()?
                 .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?
@@ -82,16 +85,16 @@ public partial class MainWindow : Window
     }
 
     // ————— 窗口位置记忆 —————
-    internal Task CheckForUpdatesAsync() => !CanInteract ? Task.CompletedTask :
-        _updateTask is { IsCompleted: false } ? _updateTask : _updateTask = CheckUpdatesCoreAsync();
+    internal Task CheckForUpdatesAsync(bool forceRefresh = false) => !CanInteract ? Task.CompletedTask :
+        _updateTask is { IsCompleted: false } ? _updateTask : _updateTask = CheckUpdatesCoreAsync(forceRefresh);
 
-    private async Task CheckUpdatesCoreAsync()
+    private async Task CheckUpdatesCoreAsync(bool forceRefresh)
     {
         CheckingUpdates = true;
         UpdateStateChanged?.Invoke();
         try
         {
-            var result = await _updates.CheckAsync(_updateCancellation.Token);
+            var result = await _updates.CheckAsync(_updateCancellation.Token, forceRefresh);
             if (CanInteract) ApplyUpdateResult(result);
         }
         catch (OperationCanceledException) { }

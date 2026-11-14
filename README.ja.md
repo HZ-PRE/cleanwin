@@ -76,7 +76,7 @@ src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
 src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe --selftest
 ```
 
-`v*` タグを push すると、GitHub Actions が自動で：ビルド → セルフテスト → パブリッシュ → インストーラー作成 → チェックサム生成 → Release ドラフト作成まで実行します。
+バージョンタグ（例：`v0.0.3`）を push すると、GitHub Actions がビルド → セルフテスト → パッケージ作成 → チェックサム生成 → Release 下書きへのアップロード → 全アップロード成功後の公開まで実行します。`-preview` などの接尾辞付きタグはプレリリースとなり、正式更新の対象外です。ブランチの手動実行ではビルド成果物のみ作成します。
 
 ## 📦 パッケージング
 

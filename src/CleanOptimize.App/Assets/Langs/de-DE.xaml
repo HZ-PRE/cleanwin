@@ -698,8 +698,9 @@ Nicht reversibel!</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.description">Vollständigen Installer herunterladen und prüfen, dann Installation starten und diese App schließen. Download kann abgebrochen werden.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">Download, Prüfung oder Start fehlgeschlagen. Netzwerk und Speicherplatz prüfen. Aktuelle Version unverändert.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">Herunterladen und prüfen…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">Installations- oder Prüfsummendatei noch nicht bereit. Bitte später erneut prüfen.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">Geprüft. Installation wird gestartet…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">Keine öffentliche Version verfügbar</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">Keine öffentliche stabile Version gefunden. Build-Artefakte und Entwürfe sind keine Updates.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">{0} / {1} heruntergeladen</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">Software aktualisieren</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">Aktuell v{0} → Neu v{1}</sys:String>

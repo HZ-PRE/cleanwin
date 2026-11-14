@@ -698,8 +698,9 @@
     <sys:String xml:space="preserve" x:Key="ui.update.description">確認後自動下載完整安裝包並校驗，完成後啟動安裝程式並關閉目前應用；下載期間可取消。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">下載、校驗或啟動安裝失敗，請檢查網路與磁碟空間後重試。目前版本未變更。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">正在下載並校驗…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">最新版本的安裝套件或校驗檔尚未準備完整，請稍後重新檢查。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">校驗完成，正在啟動安裝程式…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">暫無可用的公開正式版本</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">未找到公開正式版本。建置產物和發佈草稿不會作為更新。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">已下載 {0} / {1}</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">軟體更新</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">目前 v{0} → 新版本 v{1}</sys:String>

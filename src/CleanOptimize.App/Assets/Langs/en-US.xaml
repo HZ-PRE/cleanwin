@@ -698,8 +698,9 @@ This cannot be undone!</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.description">Download and verify the full installer, then start setup and close this app. You can cancel during download.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">Download, verification or launch failed. Check network and disk space, then retry. This version is unchanged.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">Downloading and verifying…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">The latest installer or checksum file is not ready. Check again later.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">Verified. Starting setup…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">No public release available</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">No public stable release found. Build artifacts and release drafts are not updates.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">Downloaded {0} / {1}</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">Software update</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">Current v{0} → New v{1}</sys:String>

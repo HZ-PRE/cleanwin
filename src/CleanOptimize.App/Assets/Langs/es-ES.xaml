@@ -698,8 +698,9 @@ Continúa automáticamente al terminar</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.description">Descargar y verificar el instalador completo, iniciar la instalación y cerrar esta aplicación. Puedes cancelar la descarga.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">Falló la descarga, verificación o inicio. Revisa la red y el espacio libre. La versión actual no ha cambiado.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">Descargando y verificando…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">El instalador o archivo de verificación no está listo. Vuelve a comprobar más tarde.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">Verificado. Iniciando instalación…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">No hay una versión pública disponible</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">No hay una versión estable pública. Los artefactos y borradores no son actualizaciones.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">Descargados {0} / {1}</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">Actualizar software</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">Actual v{0} → Nueva v{1}</sys:String>

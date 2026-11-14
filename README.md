@@ -77,7 +77,7 @@ src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
 src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe --selftest
 ```
 
-推送 `v*` 标签后，GitHub Actions 会自动：构建 → 安全自测 → 发布 → 编译安装包 → 生成校验和 → 创建 Release 草稿。
+推送版本标签（例如 `v0.0.3`）后，GitHub Actions 会自动：构建 → 安全自测 → 打包 → 生成校验和 → 上传 Release 草稿 → 上传成功后公开发布。带 `-preview` 等后缀的标签发布为预览版，不作为正式更新。手动运行分支构建只生成 Actions 产物；要发布更新，请推送版本标签。
 
 ## 📦 打包发布
 
@@ -125,13 +125,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\publish.ps1
 
 3.0.12 移除关于页的仓库地址及对应语言资源，并排展示公众号与微信赞赏图片，支持点击放大扫码，详见 [关于页赞赏图片验收记录](docs/ABOUT-WECHAT-2026-11-14.md)。
 
-3.0.13 启动时检查 `HZ-PRE/cleanwin` 的公开正式 Release（5 分钟缓存，无定时轮询）。发现新版本只显示 Logo 旁红色 `NEW` 和“检查更新”旁的“可更新”，点击标签打开更新框。点击“确认更新”后流式下载安装包并校验 SHA256，再启动安装程序、关闭当前应用；支持取消，下载或启动失败保持应用运行，扫描、清理、卸载期间阻止更新。
+启动时检查 `HZ-PRE/cleanwin` 的公开正式 Release（后台检查缓存 5 分钟，无定时轮询；手动“检查更新”直接重新请求，并合并正在进行的请求）。发现新版本只显示 Logo 旁红色 `NEW` 和“检查更新”旁的“可更新”，点击标签打开更新框。点击“确认更新”后流式下载安装包并校验 SHA256，再启动安装程序、关闭当前应用；支持取消，下载或启动失败保持应用运行，扫描、清理、卸载期间阻止更新。
 
 3.0.14 清理未调用代码、旧界面样式与过时文案，移除没有实现的每周报告、产品资讯、隐藏文件扫描和目录链接开关；匿名统计、崩溃报告保留并继续禁用。语言回退在生成时合并，运行时仅加载一份完整语言字典，重复选择同一语言不重建。
 
 快捷清理已接入首页、托盘和命令面板：仅扫描默认可选的低风险系统/应用/浏览器缓存，列出结果并确认后清理，支持取消和白名单保护；单项建议只扫描对应规则。完成后释放结果列表、使旧扫描摘要失效，避免额外全盘重扫。自动清理结果通知按设置开关生效，区分实际删除、隔离、跳过和失败：窗口可见时在应用内提示，托盘运行时发送系统通知。退出取消自动清理，正在操作或更新时不启动新的自动清理。
 
-更新读取 `https://api.github.com/repos/HZ-PRE/cleanwin/releases/latest`，Release 必须包含匹配版本的 `CleanOptimizeSetup-{版本}.exe` 和 `SHA256SUMS.txt`。现有 GitHub 工作流生成草稿 Release，需公开发布为正式版本后客户端才能发现；Actions 临时 Artifacts 不作为更新源。SHA256 校验用于验证完整性，自动代码签名仍未启用。
+更新读取 `https://api.github.com/repos/HZ-PRE/cleanwin/releases/latest`，Release 必须包含已上传完成、非空的 `CleanOptimizeSetup-{版本}.exe` 和 `SHA256SUMS.txt`，且版本号高于本机版本。标签工作流在附件上传成功后自动公开发布；旧流程留下的草稿需要在仓库 Releases 页面手动点击 Publish release。Actions 临时 Artifacts 不作为更新源。SHA256 校验用于验证完整性，自动代码签名仍未启用。
 
 拿到代码签名证书后，加两个环境变量即可输出签名版全套产物：
 

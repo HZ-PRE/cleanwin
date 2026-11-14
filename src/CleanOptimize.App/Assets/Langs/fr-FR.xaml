@@ -698,8 +698,9 @@ Irréversible !</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.description">Télécharger et vérifier le programme complet, puis lancer l’installation et fermer cette application. Téléchargement annulable.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">Échec du téléchargement, de la vérification ou du lancement. Vérifiez le réseau et l’espace disque. Version actuelle inchangée.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">Téléchargement et vérification…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">Le programme d’installation ou le fichier de contrôle n’est pas prêt. Réessayez plus tard.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">Vérifié. Lancement de l’installation…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">Aucune version publique disponible</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">Aucune version stable publique. Les artefacts et brouillons ne sont pas des mises à jour.</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">{0} / {1} téléchargés</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">Mise à jour</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">Version v{0} → Nouvelle v{1}</sys:String>

@@ -698,8 +698,9 @@
     <sys:String xml:space="preserve" x:Key="ui.update.description">完全版をダウンロードして検証し、インストーラーを起動して本アプリを閉じます。ダウンロード中はキャンセルできます。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.download.failed">ダウンロード、検証または起動に失敗しました。通信と空き容量を確認してください。現在の版は変更されていません。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.downloading">ダウンロード・検証中…</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.incomplete">最新版のインストーラーまたは検証ファイルが未準備です。後で再確認してください。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.installing">検証完了。インストーラーを起動中…</sys:String>
-    <sys:String xml:space="preserve" x:Key="ui.update.no.release">公開版はありません</sys:String>
+    <sys:String xml:space="preserve" x:Key="ui.update.no.release">公開正式版がありません。ビルド成果物や下書きは更新対象外です。</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.progress">{0} / {1} ダウンロード済み</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.title">ソフトウェア更新</sys:String>
     <sys:String xml:space="preserve" x:Key="ui.update.versions">現在 v{0} → 新版 v{1}</sys:String>

@@ -76,7 +76,7 @@ src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
 src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe --selftest
 ```
 
-Pushing a `v*` tag triggers GitHub Actions: build → safety self-test → publish → installer → checksums → draft Release.
+Pushing a version tag (for example `v0.0.3`) triggers GitHub Actions: build → safety self-test → package → checksums → upload a draft Release → publish after all uploads succeed. Tags with a suffix such as `-preview` produce prereleases, excluded from stable updates. Manual branch runs create build artifacts only.
 
 ## 📦 Packaging
 

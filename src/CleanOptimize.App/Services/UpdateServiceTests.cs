@@ -23,13 +23,24 @@ internal static class UpdateServiceTests
         {
             ("3.0.14", "3.0.13", true), ("3.0.9", "3.0.13", false), ("3.0.13", "3.0.13", false),
             ("3.0.13", "3.0.13-preview", true), ("3.0.13", "3.0.13+hash", false), ("3.1.0", "3.0.13", true),
+            ("0.0.2", "0.0.1", true), ("0.0.2", "0.0.2", false), ("0.0.2", "3.0.10", false),
         })
             if (UpdateService.ParseRelease(Release(release), current).HasUpdate != expected) throw new Exception("Version comparison failed");
         foreach (var data in new[] { Release("9.0.0", draft: true), Release("9.0.0", preview: true), Release("9.0.0-preview"), Release("9.0.0", installer: false), Release("../9.0.0"), "{}", "[]" })
             if (UpdateService.ParseRelease(data, "3.0.13").HasUpdate) throw new Exception("Invalid release accepted");
         if (UpdateService.ParseRelease(Release("9.0.0").Replace("SHA256SUMS.txt", "other.txt"), "3.0.13").HasUpdate) throw new Exception("Release without checksums accepted");
+        foreach (var incomplete in new[]
+        {
+            Release("9.0.0", installer: false), Release("9.0.0").Replace("SHA256SUMS.txt", "other.txt"),
+            Release("9.0.0").Replace("\"size\":200", "\"size\":0"),
+            Release("9.0.0").Replace("\"size\":200", "\"size\":\"invalid\""),
+            Release("9.0.0").Replace("\"size\":200", "\"size\":262145"),
+            Release("9.0.0").Replace("uploaded", "new"),
+        })
+            if (UpdateService.ParseRelease(incomplete, "3.0.13").Outcome != UpdateOutcome.IncompleteRelease)
+                throw new Exception("Incomplete release was not distinguished from no release");
         using var request = UpdateService.CreateRequest();
-        if (request.Method.Method != "GET" || request.RequestUri?.AbsoluteUri != UpdateService.Endpoint || request.Content != null || request.Headers.Authorization != null || request.Headers.Contains("Cookie"))
+        if (request.Method.Method != "GET" || request.RequestUri?.AbsoluteUri != UpdateService.Endpoint || request.Content != null || request.Headers.Authorization != null || request.Headers.Contains("Cookie") || request.Headers.CacheControl?.NoCache != true)
             throw new Exception("Update request must only read public metadata");
         if (!UpdateService.AllowedDownloadUri(UpdateService.AssetUri(NewRelease, false)) ||
             UpdateService.AllowedDownloadUri(new UriBuilder { Scheme = Uri.UriSchemeHttp, Host = "github.com" }.Uri) ||
@@ -46,6 +57,7 @@ internal static class UpdateServiceTests
         var service = new UpdateService(_ => { Interlocked.Increment(ref requests); return ready.Task; }, "3.0.13", () => now);
         var first = service.CheckAsync(); var second = service.CheckAsync();
         if (!ReferenceEquals(first, second)) throw new Exception("Requests were not coalesced");
+        if (!ReferenceEquals(first, service.CheckAsync(forceRefresh: true))) throw new Exception("Manual check duplicated an in-flight request");
         ready.SetResult(new ReleaseResponse(200, Release("9.0.0")));
         if (!(await first).HasUpdate || !(await service.CheckAsync()).HasUpdate || requests != 1) throw new Exception("Update cache failed");
         int sequence = 0;
@@ -60,6 +72,34 @@ internal static class UpdateServiceTests
         }
         service = new UpdateService(_ => Task.FromResult(new ReleaseResponse(200, "invalid")), "3.0.13", () => now);
         if ((await service.CheckAsync()).Outcome != UpdateOutcome.Failed) throw new Exception("Bad JSON not handled");
+
+        // Reproduce startup before publication, followed immediately by a manual check.
+        foreach (int initialStatus in new[] { 404, 403, 500 })
+        {
+            requests = 0;
+            service = new UpdateService(_ => Task.FromResult(++requests == 1
+                ? new ReleaseResponse(initialStatus, "") : new ReleaseResponse(200, Release("0.0.2"))), "0.0.1", () => now);
+            await service.CheckAsync();
+            if ((await service.CheckAsync()).HasUpdate || requests != 1) throw new Exception("Background cache failed");
+            var refreshed = await service.CheckAsync(forceRefresh: true);
+            if (!refreshed.HasUpdate || refreshed.Version != "0.0.2" || requests != 2) throw new Exception("Manual check reused stale result");
+        }
+
+        requests = 0;
+        service = new UpdateService(_ => Task.FromResult(++requests == 1 ? new ReleaseResponse(404, "") : new ReleaseResponse(200, Release("0.0.2"))), "0.0.1", () => now);
+        var main = new MainWindow(service);
+        try
+        {
+            await main.CheckForUpdatesAsync();
+            var page = new SettingsPage(main);
+            ((Button)page.FindName("BtnCheckUpdate")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            await main.CheckForUpdatesAsync();
+            if (requests != 2 || !main.UpdateState.HasUpdate) throw new Exception("Settings button did not refresh update data");
+            QuickActions.CheckUpdate(main);
+            await main.CheckForUpdatesAsync();
+            if (requests != 3 || !main.UpdateState.HasUpdate) throw new Exception("Quick action did not refresh update data");
+        }
+        finally { main.ForceClose(); }
     }
 
     internal static async Task DownloadIntegrity()
@@ -140,6 +180,11 @@ internal static class UpdateServiceTests
                 dialog.Close();
                 main.ApplyUpdateResult(new(UpdateOutcome.Current)); page.RefreshUpdateState();
                 if (badge.Visibility != Visibility.Collapsed || ((FrameworkElement)page.FindName("UpdateAvailableBadge")).Visibility != Visibility.Collapsed) throw new Exception("Stale update badge");
+                foreach (var (outcome, key) in new[] { (UpdateOutcome.NoRelease, "ui.update.no.release"), (UpdateOutcome.IncompleteRelease, "ui.update.incomplete"), (UpdateOutcome.Failed, "update.failed") })
+                {
+                    main.ApplyUpdateResult(new(outcome)); page.RefreshUpdateState();
+                    if (((TextBlock)page.FindName("UpdateStateText")).Text != Loc.T(key)) throw new Exception("Update failure explanation incorrect");
+                }
             }
             finally { main.ForceClose(); }
         }

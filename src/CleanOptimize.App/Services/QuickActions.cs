@@ -29,7 +29,7 @@ public static class QuickActions
 
     public static void CheckUpdate(MainWindow main)
     {
-        _ = main.CheckForUpdatesAsync();
+        _ = main.CheckForUpdatesAsync(forceRefresh: true);
     }
 
     /// <summary>浅色 ↔ 深色互切(system 视为浅色)。</summary>

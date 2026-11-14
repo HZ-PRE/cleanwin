@@ -76,7 +76,7 @@ src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
 src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe --selftest
 ```
 
-推送 `v*` 標籤後，GitHub Actions 會自動：建置 → 安全自測 → 發布 → 編譯安裝套件 → 產生校驗和 → 建立 Release 草稿。
+推送版本標籤（例如 `v0.0.3`）後，GitHub Actions 會自動：建置 → 安全自測 → 打包 → 產生校驗和 → 上傳 Release 草稿 → 全部上傳成功後公開發佈。含 `-preview` 等後綴的標籤發佈為預覽版，不作為正式更新。手動執行分支建置只產生建置產物。
 
 ## 📦 打包發布
 

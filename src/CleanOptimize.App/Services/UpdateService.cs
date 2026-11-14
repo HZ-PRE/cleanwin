@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace CleanOptimize.App.Services;
 
-internal enum UpdateOutcome { NotChecked, Current, Available, NoRelease, Failed }
+internal enum UpdateOutcome { NotChecked, Current, Available, NoRelease, IncompleteRelease, Failed }
 internal sealed record UpdateResult(UpdateOutcome Outcome, string? Version = null, string? Tag = null, long InstallerBytes = 0)
 {
     internal bool HasUpdate => Version != null && Tag != null;
@@ -37,12 +37,12 @@ public sealed partial class UpdateService
     internal UpdateService(Func<CancellationToken, Task<ReleaseResponse>> fetch, string currentVersion, Func<DateTimeOffset> now)
     { _fetch = fetch; _currentVersion = currentVersion; _now = now; }
 
-    internal Task<UpdateResult> CheckAsync(CancellationToken cancellationToken = default)
+    internal Task<UpdateResult> CheckAsync(CancellationToken cancellationToken = default, bool forceRefresh = false)
     {
         lock (_gate)
         {
             if (_pending is { IsCompleted: false }) return _pending;
-            if (_now() < _nextCheck) return Task.FromResult(_last);
+            if (!forceRefresh && _now() < _nextCheck) return Task.FromResult(_last);
             _pending = Task.Run(() => CheckCoreAsync(cancellationToken), cancellationToken);
             return _pending;
         }
@@ -79,6 +79,7 @@ public sealed partial class UpdateService
         request.Headers.UserAgent.ParseAdd("CleanOptimize-UpdateCheck");
         request.Headers.Accept.ParseAdd("application/vnd.github+json");
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        request.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
         return request;
     }
 
@@ -119,7 +120,7 @@ public sealed partial class UpdateService
         var tag = tagValue.GetString()!;
         var number = tag.StartsWith('v') ? tag[1..] : tag;
         if (!TryStableVersion(number, out var latest)) return new(UpdateOutcome.NoRelease);
-        if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return new(UpdateOutcome.NoRelease);
+        if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return new(UpdateOutcome.IncompleteRelease);
         long installerBytes = 0;
         bool hasChecksum = false;
         foreach (var a in assets.EnumerateArray())
@@ -130,9 +131,11 @@ public sealed partial class UpdateService
                 a.TryGetProperty("size", out var size) && size.ValueKind == JsonValueKind.Number && size.TryGetInt64(out long length) && length > 0 && length <= MaxInstallerBytes)
                 installerBytes = length;
             if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("name", out var name) && name.ValueKind == JsonValueKind.String && name.GetString() == "SHA256SUMS.txt" &&
-                a.TryGetProperty("state", out var state) && state.ValueKind == JsonValueKind.String && state.GetString() == "uploaded") hasChecksum = true;
+                a.TryGetProperty("state", out var state) && state.ValueKind == JsonValueKind.String && state.GetString() == "uploaded" &&
+                a.TryGetProperty("size", out var manifestSize) && manifestSize.ValueKind == JsonValueKind.Number &&
+                manifestSize.TryGetInt64(out var manifestLength) && manifestLength is > 0 and <= MaxResponseBytes) hasChecksum = true;
         }
-        if (installerBytes == 0 || !hasChecksum) return new(UpdateOutcome.NoRelease);
+        if (installerBytes == 0 || !hasChecksum) return new(UpdateOutcome.IncompleteRelease);
         var installed = current.Split('+')[0];
         bool installedPreview = installed.Contains('-');
         if (!TryStableVersion(installed.Split('-')[0], out var local)) return new(UpdateOutcome.Failed);
