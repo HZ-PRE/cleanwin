@@ -1,118 +1,182 @@
 <div align="center">
 
-# 🧹 CleanOptimize（清理最適化マスター）
+<img src="src/CleanOptimize.App/Assets/logo.png" alt="CleanOptimize ロゴ" width="80" />
 
-**安全・透明・復元可能な Windows クリーンアップ＆システム最適化ツール**
+# CleanOptimize for Windows
 
-[![Release](https://img.shields.io/github/v/release/smftec/cleanoptimize-windows)](../../releases/latest)
-[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Windows-10%2022H2%20%2F%2011-0078D4.svg)](#-クイックスタート)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4.svg)](#-クイックスタート)
+スキャン結果のプレビュー、リスクの説明、隔離ファイルの復元、ディスク使用量の分析に対応した Windows 向けクリーンアップ・システム管理ツール。
 
-[简体中文](README.md) | [English](README.en.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+[![Release](https://img.shields.io/github/v/release/HZ-PRE/cleanwin?label=Release)](https://github.com/HZ-PRE/cleanwin/releases/latest)
+[![Build](https://github.com/HZ-PRE/cleanwin/actions/workflows/verify.yml/badge.svg)](https://github.com/HZ-PRE/cleanwin/actions/workflows/verify.yml)
+[![License](https://img.shields.io/badge/License-BSL--1.0-blue)](LICENSE)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-0078D4)](#ダウンロードと使い方)
+[![.NET](https://img.shields.io/badge/.NET-8-512BD4)](#ソースから実行)
 
-**「クリーンは明快に、最適化は安心に」** —— すべて説明可能・プレビュー可能・復元可能。偽りの高速化はいたしません。
+[最新版をダウンロード](https://github.com/HZ-PRE/cleanwin/releases/latest) · [主な機能](#主な機能) · [ビルドとテスト](#ビルドとテスト) · [不具合の報告](https://github.com/HZ-PRE/cleanwin/issues)
 
-[⬇️ ダウンロード](../../releases/latest) · [🛠 ソースからビルド](#-クイックスタート) · [💬 お問い合わせ](#-お問い合わせ)
+[简体中文](README.md) | [English](README.en.md) | [繁體中文](README.zh-TW.md) | 日本語
 
 </div>
 
----
+## ダウンロードと使い方
 
-## ✨ スクリーンショット
+**Windows 10 / Windows 11、x64** に対応しています。インストーラー版とポータブル版には .NET ランタイムが含まれるため、利用時に .NET を別途インストールする必要はありません。
 
-| ライトテーマ | ダークテーマ |
+[Releases](https://github.com/HZ-PRE/cleanwin/releases) ページで正式版を選び、添付ファイルをダウンロードしてください。
+
+| ファイル | 用途 |
 |---|---|
-| ![ライト](docs/images/home-light.png) | ![ダーク](docs/images/home-dark.png) |
+| `CleanOptimizeSetup-<バージョン>.exe` | セットアップウィザードとアンインストーラーを備えた完全版インストーラー |
+| `CleanOptimize-<バージョン>-win-x64.zip` | ポータブル版。すべてのファイルを展開し、`CleanOptimize.exe` を実行 |
+| `SHA256SUMS.txt` | インストーラーとポータブル版の SHA256 チェックサム |
 
-| 健康診断 | ツールボックス |
+初回はまずスキャンを実行し、対象項目、リスク、影響を確認してからクリーンアップを承認してください。残したいファイルやフォルダーはホワイトリストに追加できます。失敗した項目は未清掃の理由を表示する画面で、パス、原因、対処方法を確認できます。
+
+## 主な機能
+
+| 画面・機能 | 主な内容 |
 |---|---|
-| ![健康診断](docs/images/health-check.png) | ![ツールボックス](docs/images/toolbox.png) |
+| ホーム | ヘルススコア、スキャン概要、CPU・メモリ監視、ディスク容量、ドライブ切り替え、クイッククリーンアップ、最近の操作 |
+| スマートスキャン | 複数カテゴリをスキャンし、リスク別に結果を表示。詳細のプレビュー、対象の選択、クリーンアップ結果の確認に対応 |
+| 空き容量の確保 | システム一時ファイル、アプリとブラウザーのキャッシュ、プライバシー関連データ、ごみ箱、ユーザー指定フォルダー |
+| ディスク分析 | フォルダー別使用量、大容量ファイルの検索、サイズ・種類による絞り込み、保存場所を開く操作、ごみ箱への移動。長いパスの詳細はスクロール表示 |
+| スタートアップ | レジストリ、スタートアップフォルダー、ログオン時のスケジュールタスクを確認・管理。取得可能な場合は起動時間も表示 |
+| アプリ管理 | インストール済みアプリとアイコンの表示、各アプリのアンインストーラーの起動、識別可能な残存データの検出 |
+| ツールボックス | 隔離領域の管理、重複ファイル検出、空フォルダーの整理、ファイルの完全削除、清掃履歴、システムメンテナンス状態、Windows ツールへのアクセス |
+| 設定と通知領域 | ライト・ダーク・システム連動テーマ、8 言語、ウィンドウ位置の保存、自動クリーンアップ、結果通知、バージョン更新 |
 
-## ⬇️ ダウンロード
+**クイッククリーンアップ**はホーム、通知領域のメニュー、コマンドパレットから利用できます。既定で選択対象となる低リスクのシステム・アプリ・ブラウザーキャッシュのみをスキャンし、結果の承認後に処理します。**自動クリーンアップ**は初期状態では無効です。有効にすると、アプリの実行中に設定した周期で動作します。結果通知は個別に切り替えられます。
 
-[Releases](../../releases/latest) ページから入手できます（SHA256 チェックサムは `SHA256SUMS.txt` を参照）：
+ショートカット：`Ctrl+K` でコマンドパレットを開き、`Ctrl+1`～`Ctrl+8` で画面を切り替えます。`Esc` はキャンセル対応のスキャンを中止します。ホームが非表示になるとシステム監視のサンプリングを停止し、大量のファイル一覧には UI 仮想化を使用します。
 
-| ファイル | 対象 |
-|---|---|
-| `CleanOptimizeSetup-x.x.x.exe` | ほとんどのユーザー：日本語/中国語インストーラー、アンインストール対応 |
-| `CleanOptimize-x.x.x-win-x64.zip` | ポータブル版：解凍してすぐ使用可能（.NET ランタイム同梱） |
+## クリーンアップの保護機能とローカルデータ
 
-## 🧰 機能一覧
+- **対象範囲とホワイトリストの検証**：清掃ルールは許可されたフォルダーの範囲内で動作し、システムの重要フォルダーやユーザーフォルダーを保護します。重複ファイルの回収、空フォルダーの整理、ファイルの完全削除では、ユーザーが明示的に選んだ対象を個別に検証します。これによって自動清掃の対象範囲が広がることはありません。
+- **リスクの説明**：低リスクの項目は既定で選択される場合があります。プライバシー関連データなど、確認が必要な項目は自動選択されません。処理前に説明と影響を確認できます。
+- **隔離と復元**：隔離機能が有効な場合、復元に対応する清掃対象は隔離領域へ移動し、既定で 30 日間保持されます。隔離した容量と実際に解放した容量は別々に集計します。隔離への移動ではディスクの空き容量は増えません。
+- **元に戻せない操作**：ファイルの完全削除、ごみ箱を空にする操作、隔離項目の永久削除は、本アプリでは復元できません。その他の清掃で復元できるかどうかは、ルールと隔離設定によって異なります。
+- **パスの境界**：清掃では UNC パス、ネットワークドライブ、デバイスパスを拒否し、ディレクトリリンクを介して対象範囲を越えることを防ぎます。
+- **失敗理由の表示**：ファイルの使用中、権限不足、パスの長さなどを区別し、対処方法を案内します。未清掃項目の詳細を優先して保持し、最大 1,000 件の理由と未清掃の総件数を表示します。
 
-| モジュール | 機能 |
-|---|---|
-| **ホーム** | ヘルススコア（ディスク/データ/起動の3因子、リングゲージ+レベル色）、CPU・メモリのリアルタイム監視、ディスクリングゲージ（**マルチドライブ切替**）、7日間の清理統計、最近のアクティビティ、ワンクリック提案 |
-| **健康診断** | 診断ホーム（前回スコア）→ スキャン → サマリー（スコアリング+因子バー+対応案件）→ クリーンアップ → スコア前後比較；レポートコピー |
-| **スマートスキャン** | システムデータ / ブラウザキャッシュ / アプリキャッシュ / ごみ箱を一括；リスク別グループ、ファイル明細プレビュー、右クリックで表示 / パスコピー |
-| **スペース清理** | システムデータ、アプリキャッシュ（WeChat / QQ / Discord / Steam / VS Code 等13種）、ブラウザ（Edge / Chrome / Brave / Opera / Firefox）、プライバシー（既定で未選択）、ごみ箱、**カスタム清理ディレクトリ**（二重ガード） |
-| **ディスク分析** | マルチスレッド全盤スキャン、分類統計、フォルダサイズツリー、大容量ファイル（サイズ+**種類フィルタ**） |
-| **スタートアップ** | レジストリ Run / スタートアップフォルダ / ログオンタスク；起動時間表示（公式イベント）；すべて復元可能 |
-| **アプリ管理** | アンインストール完全列挙、純正アンインストーラー、残りファイル検出（隔離・復元可） |
-| **ツールボックス** | 隔離区、ファイルシュレッダー、重複ファイル（内容ハッシュ、停止可）、空フォルダ清理、履歴、メンテナンス状態（Storage Sense / TRIM / 電源プラン、読み取り専用）、DNSフラッシュ、Windowsショートカット |
-| **効率操作** | `Ctrl+K` コマンドパレット、`Ctrl+1..8` ページ切替、`Esc` スキャン停止、グローバル右クリックメニュー |
-| **統合** | ライト/ダーク/システム準拠テーマ、8言語、トレイ（言語連動）、ウィンドウ位置記憶、初回ウィザード、自動クリーンアップ、ディスク不足通知、アプリ内更新確認 |
+設定、履歴、隔離データは `%LOCALAPPDATA%\CleanOptimize` に保存します。アプリをアンインストールしてもこのデータは保持されるため、再インストール後に隔離ファイルの確認と復元ができます。
 
-## 🔒 安全性の設計（製品の中核）
+匿名統計とクラッシュ報告の設定項目は残していますが、現在のバージョンでは送信を無効にしています。利用履歴、ファイル名、パス、ファイル内容はアップロードしません。更新機能は GitHub に公開バージョン情報を問い合わせ、承認後に更新ファイルをダウンロードします。ローカルのスキャンと清掃はオフラインで利用できます。
 
-- **統一削除ガード**：すべての削除は `SafetyGuard` の検証を通過。デスクトップ、ドキュメント、ピクチャ、ダウンロード、System32、WinSxS、Program Files などはハードコードされた拒否リストに入っており、どのルールも触れません
-- **4 段階リスク**：安全 / 低リスクのみ既定で選択。ごみ箱・更新キャッシュ・プライバシー項目は自動選択されません
-- **復元可能な隔離区**：キャッシュ以外のファイルは先に隔離区へ移動（既定 30 日保持）。いつでも復元でき、同名競合も自動処理
-- **ジャンクション非追従**：走査・削除ともに Junction / シンボリックリンクを辿りません
-- **説明可能性**：各項目に「なぜ削除できるか」「削除による影響」「復元可否」「どのプロセスが使用中か」を明記
-- **自動安全セルフテスト**：`CleanOptimize.exe --selftest` が 15 グループの安全アサーション（空フォルダ検出、スコア分级、カスタム境界ガード、起動時間服务等）を実行し、CI のリリースゲートとして機能
+## 更新の確認
 
-## 🚀 クイックスタート
+起動時に公開正式版を確認します。新しいバージョンがある場合は、上部のロゴ横に赤い **NEW**、更新確認ボタンの横に更新可能の表示が出ます。表示をクリックすると更新ダイアログが開きます。更新を承認するとインストーラーをダウンロードし、SHA256 を検証してから起動します。
 
-必要環境：Windows 10 22H2+ / Windows 11、[.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)（サードパーティ NuGet 依存ゼロ）。
+- バックグラウンドの確認結果は 5 分間キャッシュします。手動で更新を確認すると再取得し、同時に進行中のリクエストはまとめます。
+- ダウンロードはキャンセルできます。ダウンロード、検証、インストーラーの起動に失敗しても、現在のアプリは終了しません。
+- スキャン、清掃、アプリのアンインストールが進行中の場合は、処理を終えてから更新してください。
+- 下書き、プレリリース、Actions のビルド成果物は正式更新の対象外です。同じバージョンや古いバージョンでは更新通知を表示しません。
 
-```bash
-git clone https://github.com/smftec/cleanoptimize-windows.git
-cd cleanoptimize-windows
-dotnet build src/CleanOptimize.App/CleanOptimize.App.csproj -c Release
-# 起動
-src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
-# セルフテスト
-src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe --selftest
-```
+**ビルドは成功したのに更新が見つからない場合**：[Releases](https://github.com/HZ-PRE/cleanwin/releases) に正式公開されていること、`CleanOptimizeSetup-<バージョン>.exe` と `SHA256SUMS.txt` のアップロードが完了していること、インストール済みのバージョンより新しいことを確認してください。旧ワークフローが作成した下書きは、**Publish release** を実行するまでクライアントから検出できません。
 
-バージョンタグ（例：`v0.0.3`）を push すると、GitHub Actions がビルド → セルフテスト → パッケージ作成 → チェックサム生成 → Release 下書きへのアップロード → 全アップロード成功後の公開まで実行します。`-preview` などの接尾辞付きタグはプレリリースとなり、正式更新の対象外です。ブランチの手動実行ではビルド成果物のみ作成します。
+更新元は `HZ-PRE/cleanwin` の公開正式 Release です。SHA256 はファイルの整合性検証に使用します。既定の公開ワークフローでは自動コード署名を有効にしておらず、SignPath も連携していません。
 
-## 📦 パッケージング
+## ビルドとテスト
+
+### ソースから実行
+
+開発には Windows と [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) が必要です。以下のコマンドは PowerShell で実行してください。
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\publish.ps1
+git clone https://github.com/HZ-PRE/cleanwin.git
+cd cleanwin
+dotnet build ./src/CleanOptimize.App/CleanOptimize.App.csproj -c Release
+./src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe
 ```
 
-ポータブルフォルダ、zip、中国語インストーラー（[Inno Setup](https://jrsoftware.org/isinfo.php) を自動検出、スクリプトは [scripts/setup.iss](scripts/setup.iss)）、`SHA256SUMS.txt` を出力します。
+WPF と Windows Forms を使用しています。アプリケーションコードにサードパーティーの NuGet パッケージ依存関係はありません。
 
-コード署名証明書をお持ちの場合、環境変数 2 つで署名済みアーティファクト一式を出力できます：
+### 自動検証
 
 ```powershell
-$env:CM_SIGN = "1"; $env:CM_SIGN_SUBJECT = "CN=Your Name"
-powershell -File scripts\publish.ps1
+# ビルド、通信処理箇所の検査、言語リソース検査、コア回帰テスト
+./scripts/verify.ps1 -Configuration Debug
+./scripts/verify.ps1 -Configuration Release
+
+# アプリ全体のセルフテスト：コア、WPF UI、ウィンドウのライフサイクル
+Start-Process ./src/CleanOptimize.App/bin/Release/net8.0-windows/CleanOptimize.exe `
+    -ArgumentList '--selftest' -Wait
 ```
 
-## 🗺️ ロードマップ
+テストは独立した一時データフォルダーを使用し、削除保護、ホワイトリスト、隔離からの復元、使用中ファイル、重複ファイルの回収、キャンセルと並行処理、更新ファイルの検証、多言語・テーマのレイアウトを確認します。実機での清掃ルールのスキャン検証ではシステムの不要ファイルを削除せず、ファイル操作のテストでは専用サンプルを使用します。自動検証だけですべての端末の手動操作確認を代替することはできません。
 
-- [ ] SignPath Foundation によるオープンソース署名（申請準備中）
-- [ ] 署名検証付きオンラインクリーニングルール更新
-- [x] 起動時間表示（公式イベント）
-- [ ] 詳細起動分析（段階別 ETW）
-- [ ] Microsoft Store での配布
+### ローカルでのパッケージ作成
 
-## 💬 お問い合わせ
+インストーラーの作成には [Inno Setup](https://jrsoftware.org/isinfo.php) も必要です。公開スクリプトはプロジェクトのバージョンを読み取り、ランタイムを含むインストーラー、ポータブル版、チェックサムファイルを生成します。公開用アプリのセルフテストと ZIP の整合性検証も実行します。
 
-- 🌐 ウェブサイト：<https://xxxxx.com>
-- 📮 メール：<dev@xxxxx.com>
-- 💚 WeChat 公式アカウント：WeChat で「**馋熊冰**」を検索
+```powershell
+./scripts/publish.ps1 -RequireInstaller
 
-<div align="center">
-  <img src="docs/images/wechat-search.jpg" alt="WeChat検索：馋熊冰" width="640"/>
-</div>
+# ツールが PATH や既定のインストール先にない場合は、実際のパスを指定
+./scripts/publish.ps1 -DotnetPath C:/tools/dotnet/dotnet.exe `
+    -IsccPath C:/tools/Inno/ISCC.exe -RequireInstaller
+```
 
-## 📄 ライセンス
+成果物は `dist/` に出力します。開発・デバッグ用のフレームワーク依存ディレクトリも生成しますが、配布するインストーラーと ZIP はどちらもランタイムを含む自己完結型です。
 
-本プロジェクトは **GPL-3.0** で公開しています（[LICENSE](LICENSE) 参照）：自由な利用・改変・再配布が可能ですが、派生作品も同じくオープンソースにする必要があります。商用ライセンス・クローズドソースでの利用は <dev@xxxxx.com> までご相談ください。
+ビルドキャッシュを削除し、Debug / Release の検証からパッケージ作成までを最初から実行するには：
 
-リリース用バイナリのコード署名は、[SignPath Foundation](https://signpath.org) のオープンソース向け無料署名（統合準備中）を利用予定です。
+```powershell
+./scripts/full-test.ps1 -DotnetPath dotnet -IsccPath C:/tools/Inno/ISCC.exe
+```
+
+インストーラーとポータブル版の検証：
+
+```powershell
+./scripts/test-packages.ps1
+```
+
+このスクリプトはポータブル版を展開し、新しいテストフォルダーにインストールしてファイルを検証し、セルフテストとアプリ実行中のアンインストールを確認します。同じ製品がすでにインストールされている場合は、上書きを避けるため停止します。検証ログは `dist/` に保存します。
+
+### バージョン設定と GitHub での公開
+
+ローカルの既定バージョンは [CleanOptimize.App.csproj](src/CleanOptimize.App/CleanOptimize.App.csproj) の `<Version>` で設定します。`メジャー.マイナー.パッチ` 形式（例：`0.0.3`）を使用してください。`publish.ps1 -Version 0.0.3` で、そのパッケージ作成時のみバージョンを指定することもできます。
+
+[Release ワークフロー](.github/workflows/release.yml)には、次の 2 つの実行方法があります。
+
+| 実行方法 | 結果 |
+|---|---|
+| `v0.0.3` などのバージョンタグを push | タグのバージョンでビルド・検証し、インストーラー、ポータブル版、チェックサムをアップロード。すべてのアップロード成功後に Release を公開 |
+| Actions → Release → Run workflow でブランチを選択 | ビルドして `CleanOptimize-windows` 成果物をアップロード。正式版は公開しない |
+
+公開するコードを先にコミットして push し、そのコミットに未使用のバージョンタグを作成してください。`v0.0.3` を使用する例：
+
+```powershell
+git tag v0.0.3
+git push origin v0.0.3
+```
+
+タグからのビルドでは、プロジェクトのバージョンをタグのバージョンで上書きします。ローカルとクラウドを一致させるため、プロジェクトファイルも更新することを推奨します。`v0.0.3-preview.1` のように接尾辞が付いたタグはプレリリースとなり、正式版クライアントには更新を通知しません。通常のブランチ push と PR では、[Verify ワークフロー](.github/workflows/verify.yml)がビルドとコア回帰テストを実行します。
+
+## プロジェクト構成
+
+```text
+src/
+  CleanOptimize.App/   WPF UI、テーマ、通知領域、更新サービス
+  CleanOptimize.Core/  清掃ルール、保護機能、分析、ローカル保存
+  SelfTestRunner/      コア自動テストのエントリーポイント
+scripts/              ビルド、テスト、パッケージ、言語リソース生成スクリプト
+.github/workflows/    GitHub Actions の検証・公開ワークフロー
+```
+
+## フィードバックとサポート
+
+不具合や機能の提案は [Issues](https://github.com/HZ-PRE/cleanwin/issues) に投稿してください。アプリのバージョン、Windows のバージョン、再現手順、エラーメッセージを添えてください。ログやスクリーンショットを共有する前に、個人のファイルパスなどの機密情報を確認し、必要な部分を伏せてください。
+
+WeChat で **馋熊冰** を検索してください。WeChat の連絡先と任意の寄付用コードは、アプリの「このアプリについて」画面からも確認できます。
+
+<table>
+  <tr><th>WeChat で検索</th><th>WeChat で寄付</th></tr>
+  <tr>
+    <td align="center"><img src="src/CleanOptimize.App/Assets/wechat-search.jpg" alt="WeChat で 馋熊冰 を検索" width="280" /></td>
+    <td align="center"><img src="src/CleanOptimize.App/Assets/wx_pay.png" alt="WeChat 寄付用 QR コード" width="200" /></td>
+  </tr>
+</table>
+
+## ライセンス
+
+本プロジェクトは [Boost Software License 1.0（BSL-1.0）](LICENSE) を採用しており、商用利用、改変、再配布が認められています。ソースコードまたは派生したソースコードを配布する際は、著作権表示とライセンス全文を保持してください。詳細な条件と免責事項は [LICENSE](LICENSE) を参照してください。

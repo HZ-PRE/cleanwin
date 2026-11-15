@@ -8,6 +8,7 @@ Windows 清理与系统管理工具，支持扫描预览、风险提示、隔离
 
 [![Release](https://img.shields.io/github/v/release/HZ-PRE/cleanwin?label=Release)](https://github.com/HZ-PRE/cleanwin/releases/latest)
 [![Build](https://github.com/HZ-PRE/cleanwin/actions/workflows/verify.yml/badge.svg)](https://github.com/HZ-PRE/cleanwin/actions/workflows/verify.yml)
+[![License](https://img.shields.io/badge/License-BSL--1.0-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-0078D4)](#下载与使用)
 [![.NET](https://img.shields.io/badge/.NET-8-512BD4)](#从源码运行)
 
@@ -175,3 +176,7 @@ scripts/              构建、测试、打包与语言资源生成脚本
     <td align="center"><img src="src/CleanOptimize.App/Assets/wx_pay.png" alt="微信赞赏二维码" width="200" /></td>
   </tr>
 </table>
+
+## 许可证
+
+本项目采用 [Boost Software License 1.0（BSL-1.0）](LICENSE)，允许商业使用、修改和分发。分发源代码或其衍生源代码时，需保留版权声明及许可证全文。具体条件与免责声明请参阅 [LICENSE](LICENSE)。
